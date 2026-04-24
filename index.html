@@ -1,0 +1,3042 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>WAMY — Bourse de Casablanca</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Suivez les actions de la Bourse de Casablanca en temps réel. Cours, dividendes, calculateur et favoris.">
+  <meta name="theme-color" content="#34d378">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WAMY">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+/* ════════════════════════════════════════════
+   BOURSEDATA MAROC — style.css
+════════════════════════════════════════════ */
+
+/* ── THEME VARIABLES ── */
+:root {
+  --bg:         #070d0a;
+  --bg2:        #0c1610;
+  --bg3:        #111e16;
+  --card:       #0f1a13;
+  --card2:      #152019;
+  --border:     rgba(52,211,120,0.12);
+  --border2:    rgba(52,211,120,0.22);
+  --green:      #34d378;
+  --green2:     #22c55e;
+  --green-dim:  rgba(52,211,120,0.08);
+  --green-glow: rgba(52,211,120,0.25);
+  --red:        #f43f5e;
+  --gold:       #f5c842;
+  --text:       #e8f5ee;
+  --text2:      #8fa899;
+  --text3:      #4d6b58;
+  --accent:     #00ffa3;
+  --radius:     16px;
+  --radius-sm:  10px;
+}
+
+/* ── LIGHT MODE ── */
+.light {
+  --bg:         #f0f7f2;
+  --bg2:        #e4f0e8;
+  --bg3:        #d8eadd;
+  --card:       #ffffff;
+  --card2:      #eaf4ee;
+  --border:     rgba(22,163,74,0.15);
+  --border2:    rgba(22,163,74,0.3);
+  --green:      #16a34a;
+  --green2:     #15803d;
+  --green-dim:  rgba(22,163,74,0.08);
+  --green-glow: rgba(22,163,74,0.2);
+  --red:        #dc2626;
+  --gold:       #b45309;
+  --text:       #0f2d18;
+  --text2:      #3d6b4f;
+  --text3:      #7aad8a;
+  --accent:     #16a34a;
+}
+
+/* ── RESET ── */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Syne', sans-serif;
+  height: 100%; width: 100%; overflow: hidden; transition: background 0.3s;
+}
+
+/* ── SHELL ── */
+.shell {
+  width: 100%; height: 100dvh;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden; background: var(--bg);
+}
+.shell::before {
+  content: ''; position: absolute; top: -120px; left: 50%;
+  transform: translateX(-50%); width: 600px; height: 400px;
+  background: radial-gradient(circle, rgba(52,211,120,0.07) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── COMPANY LOGOS ── */
+.logo-wrap {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+/* Avatar shown by default — fills the container */
+.company-logo.avatar-visible {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+/* Real logo hidden until swapToRealLogo() confirms it's valid */
+.company-logo.real-logo {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 3px;
+  background: rgba(255,255,255,0.07);
+}
+/* When real logo swaps in, neutralise the sector color background */
+.logo-wrap.has-logo {
+  background: rgba(255,255,255,0.07) !important;
+}
+.light .logo-wrap.has-logo {
+  background: rgba(0,0,0,0.04) !important;
+}
+/* Modal logo container */
+.modal-avatar {
+  width: 56px; height: 56px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0; position: relative;
+  background: var(--card2); border: 1px solid var(--border);
+}
+.modal-logo {
+  width: 56px; height: 56px; border-radius: 14px;
+}
+.modal-logo.avatar-visible {
+  object-fit: cover; display: block;
+}
+.modal-logo.real-logo {
+  display: none; position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain; padding: 6px;
+  background: rgba(255,255,255,0.07); border-radius: 14px;
+}
+.modal-avatar-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 20px; font-family: 'JetBrains Mono', monospace;
+  border-radius: 14px;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; position: relative; z-index: 10; flex-shrink: 0; gap: 8px;
+}
+.header-center { flex: 1; display: flex; justify-content: center; }
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--green) 0%, #0fa84e 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; color: #070d0a;
+  box-shadow: 0 0 16px var(--green-glow);
+}
+.logo-text { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.logo-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+  background: var(--green-dim); border: 1px solid var(--border2); color: var(--green);
+  padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;
+}
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.btn-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-icon:active { transform: scale(0.92); background: var(--card2); }
+.btn-icon svg { width: 18px; height: 18px; }
+.btn-login {
+  height: 36px; padding: 0 14px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--green) 0%, #0fa84e 100%);
+  border: none; color: #070d0a; font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 12px; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 0 12px var(--green-glow);
+}
+.btn-login:active { transform: scale(0.94); }
+
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+  width: 52px; height: 28px; border-radius: 14px;
+  background: var(--card2); border: 1px solid var(--border2);
+  position: relative; cursor: pointer; transition: background 0.3s; flex-shrink: 0;
+}
+.theme-toggle-knob {
+  position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--green);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.light .theme-toggle-knob { transform: translateX(24px); background: #f5c842; }
+.theme-toggle-knob svg { width: 12px; height: 12px; }
+
+/* ── NAV TABS ── */
+.nav-tabs {
+  display: flex; gap: 4px; padding: 0 20px 12px;
+  overflow-x: auto; flex-shrink: 0; scrollbar-width: none; position: relative; z-index: 10;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  border: 1px solid transparent; display: flex; align-items: center; gap: 5px;
+  white-space: nowrap; color: var(--text2);
+}
+.tab.active { background: var(--green-dim); border-color: var(--border2); color: var(--green); }
+.tab-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ── PAGES ── */
+/* ── PAGE SLIDE TRANSITIONS ── */
+.pages-wrapper {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  /* overflow:clip clips children without creating new stacking context,
+     so position:fixed elements (bottom-nav, modals) still work correctly */
+  overflow: clip;
+}
+.page {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform, opacity;
+  overflow: hidden;
+  background: var(--bg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.page.active {
+  display: flex;
+}
+
+/* ── SCROLL CONTENT ── */
+.content, .outils-content, .search-content, .div-content, .portfolio-content {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 0 16px 100px; scrollbar-width: none;
+  position: relative; z-index: 5; width: 100%;
+}
+.content::-webkit-scrollbar, .outils-content::-webkit-scrollbar,
+.search-content::-webkit-scrollbar, .div-content::-webkit-scrollbar,
+.portfolio-content::-webkit-scrollbar { display: none; }
+
+/* ── MASI CARD ── */
+.masi-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 16px; margin-bottom: 12px;
+  position: relative; overflow: hidden;
+}
+.masi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent); opacity: 0.5;
+}
+.masi-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; color: var(--green); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.masi-value {
+  font-size: clamp(24px, 8vw, 32px); font-weight: 800; letter-spacing: -1px; line-height: 1;
+  background: linear-gradient(135deg, #fff 0%, var(--green) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.masi-change { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.change-neg { color: var(--red); }
+.change-pos { color: var(--green); }
+.masi-meta { color: var(--text3); font-size: 11px; }
+.mini-chart { width: 100%; height: 48px; margin-top: 12px; }
+.mini-chart svg { width: 100%; height: 100%; }
+.arrow-icon { font-size: 0.75em; font-style: normal; line-height: 1; }
+
+/* ── STATS ROW ── */
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; }
+.stat-value { font-size: 22px; font-weight: 800; line-height: 1; }
+.stat-value.green { color: var(--green); }
+.stat-value.red   { color: var(--red); }
+.stat-value.gray  { color: var(--text2); }
+.stat-label { font-size: 10px; color: var(--text3); margin-top: 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; }
+
+/* ── SUMMARY ROW ── */
+.summary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.summary-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+.summary-card-label { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; margin-bottom: 4px; }
+.summary-card-value { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+
+/* ── FEAR CARD ── */
+.fear-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 14px;
+}
+.fear-title { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+.fear-level { font-size: 15px; font-weight: 700; color: var(--red); }
+.rsi-box    { text-align: right; font-family: 'JetBrains Mono', monospace; }
+.rsi-val    { font-size: 22px; font-weight: 700; color: var(--text); }
+.rsi-label  { font-size: 10px; color: var(--text3); letter-spacing: 1px; }
+
+/* ── SECTION HEADER ── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 10px; }
+.section-title {
+  font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2);
+  display: flex; align-items: center; gap: 7px;
+}
+.section-action { font-size: 11px; color: var(--green); font-family: 'JetBrains Mono', monospace; cursor: pointer; }
+
+/* ── FILTER CHIPS ── */
+.filter-row { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex-shrink: 0; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--border); color: var(--text2); background: var(--card);
+  cursor: pointer; transition: all 0.15s; font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+}
+.filter-chip.active { background: var(--green-dim); border-color: var(--border2); color: var(--green); }
+.filter-chip:active { transform: scale(0.94); }
+
+/* ── STOCK TABLE ── */
+.stock-table { display: flex; flex-direction: column; gap: 6px; }
+.stock-row {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.stock-row.suspended { opacity: 0.5; }
+.stock-row::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 2px 0 0 2px; transition: opacity 0.2s; opacity: 0; }
+.stock-row.up::before   { background: var(--green); }
+.stock-row.down::before { background: var(--red); }
+.stock-row:active { transform: scale(0.98); background: var(--card2); }
+.stock-row:active::before { opacity: 1; }
+
+.stock-rank   { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; width: 16px; text-align: center; flex-shrink: 0; }
+.stock-avatar {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stock-info   { flex: 1; min-width: 0; }
+.stock-name   { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stock-sector { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stock-chart  { width: 50px; height: 28px; flex-shrink: 0; }
+.stock-chart svg { width: 100%; height: 100%; }
+.stock-right  { text-align: right; flex-shrink: 0; }
+.stock-price  { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.stock-change { font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 2px; justify-content: flex-end; margin-top: 2px; }
+.stock-change.up   { color: var(--green); }
+.stock-change.down { color: var(--red); }
+.stock-cap    { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.div-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+  background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.3);
+  color: #f5c842; padding: 1px 5px; border-radius: 4px; letter-spacing: 0.3px;
+}
+.star-btn { flex-shrink: 0; cursor: pointer; color: var(--text3); transition: color 0.2s; padding: 4px; }
+.star-btn.starred { color: var(--gold); }
+.star-btn:active { transform: scale(1.3); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; width: 100%;
+  background: rgba(7,13,10,0.92); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 10px 0 20px; z-index: 100; transition: background 0.3s;
+}
+.light .bottom-nav { background: rgba(240,247,242,0.95); }
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; padding: 4px clamp(8px, 3vw, 16px);
+  transition: all 0.2s; position: relative; flex: 1; min-width: 0;
+}
+.nav-item:active { transform: scale(0.9); }
+.nav-item svg { width: 22px; height: 22px; }
+.nav-item span { font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.5px; color: var(--text3); transition: color 0.2s; }
+.nav-item.active span { color: var(--green); }
+.nav-item.active svg { color: var(--green); filter: drop-shadow(0 0 6px var(--green-glow)); }
+.nav-item:not(.active) svg { color: var(--text3); }
+.nav-indicator {
+  position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 3px; border-radius: 0 0 4px 4px;
+  background: var(--green); box-shadow: 0 0 8px var(--green-glow);
+  opacity: 0; transition: opacity 0.2s;
+}
+.nav-item.active .nav-indicator { opacity: 1; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+  z-index: 200; align-items: flex-end; justify-content: center; width: 100%;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0; width: 100%; max-width: 600px;
+  padding: 20px 20px 40px; animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--text3); margin: 0 auto 20px; }
+.modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.modal-title  { flex: 1; }
+.modal-name   { font-size: 18px; font-weight: 800; }
+.modal-ticker { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.modal-price-big {
+  font-size: 36px; font-weight: 800; font-family: 'JetBrains Mono', monospace; letter-spacing: -1px;
+  background: linear-gradient(135deg, #fff 0%, var(--green) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.modal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.modal-stat  { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.modal-stat-label { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; margin-bottom: 4px; }
+.modal-stat-val   { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.modal-close {
+  width: 100%; padding: 14px; border-radius: 12px; margin-top: 16px;
+  background: var(--green-dim); border: 1px solid var(--border2);
+  color: var(--green); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+}
+.modal-close:active { transform: scale(0.97); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 18px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--green);
+  z-index: 300; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* ── PAGE TITLES ── */
+.page-title { font-size: clamp(20px, 6vw, 24px); font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; color: var(--text); }
+.page-sub   { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+
+/* ── CALCULATOR ── */
+.calc-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.calc-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--green), transparent); opacity: 0.4; }
+.calc-section-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; color: var(--green); text-transform: uppercase; margin-bottom: 16px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.input-group { margin-bottom: 14px; }
+.input-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
+.input-badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; background: var(--green-dim); border: 1px solid var(--border2); color: var(--green); padding: 2px 6px; border-radius: 4px; }
+.calc-input { width: 100%; padding: 13px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; outline: none; transition: border-color 0.2s; -webkit-appearance: none; appearance: none; }
+.calc-input:focus { border-color: var(--border2); box-shadow: 0 0 0 3px var(--green-dim); }
+.calc-input::placeholder { color: var(--text3); }
+.formula-box { background: var(--green-dim); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--green); text-align: center; letter-spacing: 0.5px; }
+.formula-box span { color: var(--text2); }
+
+/* ── RESULT CARD ── */
+.result-card { background: linear-gradient(135deg, rgba(52,211,120,0.1) 0%, rgba(15,168,78,0.05) 100%); border: 1px solid var(--border2); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; min-height: 140px; }
+.result-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; gap: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 12px; text-align: center; }
+.result-content { display: none; }
+.result-content.show { display: block; }
+.result-empty.hide   { display: none; }
+.result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.result-row:last-child { border-bottom: none; }
+.result-key { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.result-val { font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.result-val.total { font-size: 22px; font-weight: 800; color: var(--green); background: linear-gradient(135deg, var(--green) 0%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* ── QR SEARCH ── */
+.qr-search-wrap { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px; margin-bottom: 12px; transition: border-color 0.2s; }
+.qr-search-wrap:focus-within { border-color: var(--border2); box-shadow: 0 0 0 3px var(--green-dim); }
+.qr-search-wrap svg { color: var(--text3); flex-shrink: 0; width: 17px; height: 17px; }
+.qr-search-wrap input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.qr-search-wrap input::placeholder { color: var(--text3); }
+.qr-clear { flex-shrink: 0; color: var(--text3); cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px; display: none; transition: color 0.15s; }
+.qr-clear:hover { color: var(--text); }
+.qr-clear.show  { display: block; }
+.qr-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; scroll-snap-type: x mandatory; }
+.qr-strip::-webkit-scrollbar { display: none; }
+.qr-card { flex-shrink: 0; scroll-snap-align: start; width: 150px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 12px; cursor: pointer; transition: all 0.18s; display: flex; flex-direction: column; gap: 6px; }
+.qr-card:active { transform: scale(0.95); border-color: var(--border2); background: var(--card2); }
+.qr-card.selected { border-color: var(--green); background: var(--green-dim); box-shadow: 0 0 0 1px var(--green); }
+.qr-ticker { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.qr-name   { font-size: 10px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono', monospace; }
+.qr-price  { font-size: 14px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.qr-change { font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.qr-change.up   { color: var(--green); }
+.qr-change.down { color: var(--red); }
+.qr-use-btn { width: 100%; padding: 6px 0; border-radius: 6px; background: var(--green-dim); border: 1px solid var(--border2); color: var(--green); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.qr-use-btn:active { transform: scale(0.96); }
+
+/* ── SEARCH BAR ── */
+.search-bar { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; width: 100%; }
+.search-bar svg { color: var(--text3); flex-shrink: 0; width: 18px; height: 18px; }
+.search-bar input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+.search-bar input::placeholder { color: var(--text3); }
+
+/* ── DIVIDENDES PAGE ── */
+.div-summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.div-sum-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; }
+.div-sum-label  { font-size: 9px; color: var(--text3); font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase; }
+.div-sum-val    { font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.div-sum-ticker { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; letter-spacing: 0.5px; }
+.div-sort-row   { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+.div-sort-row::-webkit-scrollbar { display: none; }
+.div-sort-btn   { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; border: 1px solid var(--border); color: var(--text2); background: var(--card); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.div-sort-btn.active { background: rgba(245,200,66,0.1); border-color: rgba(245,200,66,0.35); color: #f5c842; }
+.div-sort-btn:active { transform: scale(0.94); }
+.div-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 14px 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.18s; position: relative; overflow: hidden; }
+.div-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #f5c842; border-radius: 2px 0 0 2px; }
+.div-card:active { transform: scale(0.98); background: var(--card2); }
+.div-info  { flex: 1; min-width: 0; }
+.div-name  { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.div-meta  { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+.div-right { text-align: right; flex-shrink: 0; }
+.div-yield-big { font-size: 20px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #f5c842; }
+.div-amount    { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.div-date-badge{ font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); margin-top: 3px; }
+
+/* ── PORTFOLIO / LOGIN ── */
+.login-prompt { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 20px; text-align: center; margin-top: 20px; }
+.login-icon  { margin-bottom: 16px; }
+.login-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text); }
+.login-sub   { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+.btn-google  { display: flex; align-items: center; gap: 10px; justify-content: center; width: 100%; padding: 14px; border-radius: 12px; background: #fff; border: none; color: #1f1f1f; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+.btn-google:active { transform: scale(0.96); }
+.google-icon { width: 20px; height: 20px; }
+
+/* ── FAVORIS ── */
+.fav-section    { margin-top: 20px; }
+.fav-header     { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.fav-title-wrap { display: flex; align-items: center; gap: 10px; }
+.fav-star-glow  { width: 34px; height: 34px; border-radius: 10px; background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.3); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(245,200,66,0.2); }
+.fav-title      { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; color: var(--text); }
+.fav-count      { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; background: rgba(245,200,66,0.15); border: 1px solid rgba(245,200,66,0.3); color: #f5c842; padding: 2px 8px; border-radius: 20px; }
+.fav-hint       { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.fav-empty      { background: var(--card); border: 1px dashed rgba(245,200,66,0.2); border-radius: var(--radius); padding: 36px 20px; text-align: center; }
+.fav-empty-text { font-size: 15px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+.fav-empty-sub  { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
+.fav-card       { position: relative; overflow: hidden; border-radius: var(--radius); margin-bottom: 10px; cursor: pointer; transition: transform 0.2s; border: 1px solid var(--border); }
+.fav-card:active { transform: scale(0.98); }
+.fav-card-glow  { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
+.fav-card-glow.glow-green { background: var(--green); box-shadow: 0 0 12px var(--green); }
+.fav-card-glow.glow-red   { background: var(--red);   box-shadow: 0 0 12px var(--red); }
+.fav-card-inner { display: flex; align-items: center; padding: 14px 14px 14px 17px; gap: 12px; background: var(--card); }
+.fav-card-info  { flex: 1; min-width: 0; }
+.fav-card-name  { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.fav-ticker-badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; background: var(--green-dim); border: 1px solid var(--border2); color: var(--green); padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
+.fav-price  { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.fav-change { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.fav-change.up   { color: var(--green); }
+.fav-change.down { color: var(--red); }
+.fav-remove-btn { width: 28px; height: 28px; border-radius: 8px; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.35); color: var(--red); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; flex-shrink: 0; }
+.fav-remove-btn:hover  { background: rgba(244,63,94,0.22); }
+.fav-remove-btn:active { transform: scale(0.88); }
+
+/* ── LIGHT MODE OVERRIDES ── */
+.light .bottom-nav { background: rgba(240,247,242,0.95); }
+.light .masi-card, .light .stat-card, .light .summary-card,
+.light .fear-card, .light .stock-row, .light .calc-card,
+.light .result-card, .light .qr-card, .light .div-card,
+.light .div-sum-card, .light .login-prompt, .light .modal,
+.light .modal-stat, .light .search-bar, .light .qr-search-wrap,
+.light .fav-card-inner, .light .fav-empty {
+  background: var(--card); border-color: var(--border); color: var(--text);
+}
+.light .stock-name, .light .div-name, .light .modal-name,
+.light .page-title, .light .logo-text { color: var(--text); }
+.light .calc-input  { background: var(--bg3); color: var(--text); border-color: var(--border); }
+.light .filter-chip { background: var(--card); color: var(--text2); border-color: var(--border); }
+.light .filter-chip.active { background: var(--green-dim); color: var(--green); border-color: var(--border2); }
+.light .tab.active  { background: var(--green-dim); color: var(--green); border-color: var(--border2); }
+.light .modal-price-big { background: linear-gradient(135deg, var(--text) 0%, var(--green) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.light .masi-value  { background: linear-gradient(135deg, var(--text) 0%, var(--green) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.light .div-sort-btn { background: var(--card); color: var(--text2); border-color: var(--border); }
+.light .login-title { color: var(--text); }
+.light .login-sub   { color: var(--text2); }
+
+/* ── AVATAR COLORS ── */
+.c1 { background: rgba(52,211,120,0.15);  color: #34d378; }
+.c2 { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+.c3 { background: rgba(245,200,66,0.15);  color: #f5c842; }
+.c4 { background: rgba(244,63,94,0.15);   color: #f43f5e; }
+.c5 { background: rgba(167,139,250,0.15); color: #a78bfa; }
+.c6 { background: rgba(251,146,60,0.15);  color: #fb923c; }
+.c7 { background: rgba(20,184,166,0.15);  color: #2dd4bf; }
+.c8 { background: rgba(236,72,153,0.15);  color: #ec4899; }
+
+/* ── ANIMATIONS ── */
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .logo-text, .logo-badge { display: none; }
+  .header { padding: 8px 16px; }
+  .btn-login { padding: 0 10px; font-size: 11px; height: 32px; }
+  .nav-tabs { padding: 0 12px 10px; }
+  .content, .outils-content, .search-content, .div-content, .portfolio-content { padding: 0 12px 100px; }
+  .masi-value { font-size: clamp(20px, 10vw, 28px); }
+  .fear-card { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .rsi-box { text-align: left; width: 100%; }
+  .nav-item span { font-size: 9px; }
+}
+@media (min-width: 700px) {
+  .header, .nav-tabs { padding-left: 32px; padding-right: 32px; }
+  .content, .outils-content, .search-content, .div-content, .portfolio-content { padding: 0 32px 100px; }
+  .summary-row { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+@media (min-width: 900px) {
+  .stock-table { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+}
+@media (min-width: 1024px) {
+  .content, .outils-content, .search-content, .div-content, .portfolio-content { padding: 0 48px 100px; }
+  .stock-table { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (min-width: 1400px) {
+  .stock-table { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+
+/* ── PAGE SLIDE TRANSITIONS ── */
+.pages-wrapper { position: relative; flex: 1; min-height: 0; overflow: clip; }
+.page { display: none; flex-direction: column; position: absolute; top:0;left:0;right:0;bottom:0; width:100%; height:100%; will-change: transform,opacity; overflow: hidden; background: var(--bg); backface-visibility:hidden; }
+.page.active { display: flex; }
+
+/* ── MARKET TIMER ── */
+.market-timer {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 11px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+}
+.market-timer.open  { border-color: rgba(52,211,120,0.45); background: rgba(52,211,120,0.06); }
+.market-timer.closed{ border-color: rgba(244,63,94,0.35);  background: rgba(244,63,94,0.05); }
+.market-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.market-timer.open  .market-dot  { background: var(--green); animation: pulse 1.5s infinite; }
+.market-timer.closed .market-dot { background: var(--red); }
+.market-status { font-weight: 700; font-size: 11px; }
+.market-timer.open  .market-status { color: var(--green); }
+.market-timer.closed .market-status{ color: var(--red); }
+.market-time { color: var(--text3); font-size: 10px; }
+.light .market-timer { background: var(--card); }
+.light .market-timer.open  { border-color: rgba(22,163,74,0.4); background: rgba(22,163,74,0.06); }
+.light .market-timer.closed{ border-color: rgba(220,38,38,0.35); background: rgba(220,38,38,0.05); }
+
+/* ── BROKER FEE SELECTOR ── */
+.broker-fee-row { display: flex; gap: 6px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
+.broker-btn {
+  flex-shrink: 0; padding: 6px 12px; border-radius: 8px;
+  font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+  border: 1px solid var(--border); color: var(--text2); background: var(--card);
+  cursor: pointer; transition: all 0.15s;
+}
+.broker-btn.active { background: var(--green-dim); border-color: var(--border2); color: var(--green); }
+.broker-btn:active { transform: scale(0.94); }
+.broker-custom { width: 72px !important; padding: 6px 8px !important; font-size: 11px !important; }
+
+/* ── LOGO SYSTEM ── */
+.logo-wrap { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.company-logo.avatar-visible { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.company-logo.real-logo { display: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 3px; }
+.logo-wrap.has-logo { background: rgba(255,255,255,0.07) !important; }
+.light .logo-wrap.has-logo { background: rgba(0,0,0,0.04) !important; }
+.modal-avatar { width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; position:relative; background:var(--card2); border:1px solid var(--border); }
+.modal-logo { width:56px; height:56px; border-radius:14px; }
+.modal-logo.avatar-visible { object-fit:cover; display:block; }
+.modal-logo.real-logo { display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:6px; background:rgba(255,255,255,0.07); border-radius:14px; }
+.stock-row.suspended { opacity: 0.5; }
+
+/* ── RESPONSIVE FIX for header with center ── */
+@media (max-width: 380px) {
+  .market-time { display: none; }
+  .logo-text { display: none; }
+}
+
+/* ════════════════════════════════════════════
+   PWA — NATIVE APP FEEL
+════════════════════════════════════════════ */
+
+/* Disable pull-to-refresh and prevent overscroll bounce */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* Disable text selection globally except inputs */
+body, .shell, .stock-row, .nav-item, .filter-chip, .tab, .div-card {
+  user-select: none;
+  -webkit-user-select: none;
+}
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Tap highlight already removed in reset — reinforce */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Safe Area Insets (Notch / Home Bar support) ── */
+.header {
+  padding-top: calc(10px + env(safe-area-inset-top));
+}
+.bottom-nav {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+.shell {
+  padding-left:  env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ── Press / Tap Feedback ── */
+.stock-row:active,
+.div-card:active,
+.fav-card:active,
+.qr-card:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+.nav-item:active,
+.filter-chip:active,
+.broker-btn:active,
+.tab:active,
+.div-sort-btn:active {
+  transform: scale(0.93);
+  transition: transform 0.1s ease;
+}
+
+/* ════════════════════════════════════════════
+   PRICE PULSE MICRO-INTERACTION
+   Applied via JS when a stock price updates
+════════════════════════════════════════════ */
+@keyframes priceFlash {
+  0%   { background: var(--green-dim); }
+  50%  { background: rgba(52,211,120,0.25); }
+  100% { background: transparent; }
+}
+@keyframes priceFlashRed {
+  0%   { background: rgba(244,63,94,0.08); }
+  50%  { background: rgba(244,63,94,0.22); }
+  100% { background: transparent; }
+}
+.price-pulse-up   { animation: priceFlash    0.6s ease; border-radius: 4px; }
+.price-pulse-down { animation: priceFlashRed 0.6s ease; border-radius: 4px; }
+
+/* ════════════════════════════════════════════
+   SKELETON LOADING
+════════════════════════════════════════════ */
+@keyframes skeletonShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skel {
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--card2) 25%,
+    rgba(255,255,255,0.07) 50%,
+    var(--card2) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite linear;
+}
+.skeleton-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.skel-rank   { width: 16px;  height: 12px; flex-shrink: 0; }
+.skel-avatar { width: 34px;  height: 34px; border-radius: 9px; flex-shrink: 0; }
+.skel-name   { width: 120px; height: 13px; margin-bottom: 6px; }
+.skel-sector { width: 80px;  height: 10px; }
+.skel-price  { width: 70px;  height: 14px; margin-bottom: 4px; margin-left: auto; }
+.skel-change { width: 50px;  height: 11px; margin-left: auto; }
+
+/* ════════════════════════════════════════════
+   LOGIN SCREEN
+════════════════════════════════════════════ */
+.login-screen {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease;
+  padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+}
+.login-screen.visible { opacity: 1; pointer-events: all; }
+.login-screen.hiding  { opacity: 0; pointer-events: none; }
+
+.login-bg-glow {
+  position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(52,211,120,0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.login-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; width: 100%; max-width: 380px;
+}
+
+/* Logo */
+.login-logo-wrap {
+  position: relative; margin-bottom: 20px;
+}
+.login-logo-icon {
+  width: 80px; height: 80px; border-radius: 24px;
+  background: linear-gradient(135deg, var(--green) 0%, #0fa84e 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; color: #070d0a;
+  box-shadow: 0 0 48px rgba(52,211,120,0.4), 0 0 80px rgba(52,211,120,0.15);
+  animation: logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%, 100% { box-shadow: 0 0 48px rgba(52,211,120,0.4), 0 0 80px rgba(52,211,120,0.15); }
+  50%       { box-shadow: 0 0 64px rgba(52,211,120,0.6), 0 0 100px rgba(52,211,120,0.25); }
+}
+.login-logo-shine {
+  position: absolute; inset: 0; border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.login-brand {
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px;
+  letter-spacing: -1px; margin-bottom: 8px;
+}
+.login-tagline {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  color: var(--text2); line-height: 1.6; margin-bottom: 28px;
+}
+
+.login-features {
+  display: flex; flex-direction: column; gap: 10px;
+  width: 100%; margin-bottom: 32px;
+}
+.login-feature {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2);
+}
+.login-feature svg { color: var(--green); flex-shrink: 0; }
+
+/* Login Button */
+.login-form { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.login-input { 
+  width: 100%; padding: 14px 16px; border-radius: 12px; 
+  background: var(--surface2); border: 1px solid var(--border); 
+  color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; 
+  outline: none; transition: border-color 0.2s, background 0.2s; 
+}
+.login-input:focus { border-color: var(--green); background: rgba(52,211,120,0.05); }
+
+.login-btn-primary {
+  width: 100%; padding: 16px; border-radius: 14px;
+  background: var(--green); border: none; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px;
+  color: #070d0a; transition: transform 0.1s ease, box-shadow 0.2s;
+  box-shadow: 0 0 24px rgba(52,211,120,0.3);
+  margin-top: 4px;
+}
+.login-btn-primary:active { transform: scale(0.95); }
+.login-btn-primary:hover  { box-shadow: 0 0 36px rgba(52,211,120,0.5); }
+
+.login-divider {
+  width: 100%; display: flex; align-items: center; text-align: center; color: var(--text3);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-bottom: 24px;
+}
+.login-divider::before, .login-divider::after {
+  content: ''; flex: 1; border-bottom: 1px solid var(--border);
+}
+.login-divider span { padding: 0 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.login-btn-secondary {
+  width: 100%; padding: 14px 20px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px;
+  color: var(--text); transition: transform 0.1s ease, background 0.2s;
+  margin-bottom: 16px;
+}
+.login-btn-secondary:active { transform: scale(0.96); background: var(--surface2); }
+
+.login-skip {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: var(--text3); cursor: pointer; padding: 8px 16px;
+  transition: color 0.2s; text-decoration: underline;
+  text-underline-offset: 3px; margin-bottom: 24px;
+}
+.login-skip:active { color: var(--text2); transform: scale(0.97); }
+
+.login-disclaimer {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--text3); letter-spacing: 0.5px;
+}
+
+/* ════════════════════════════════════════════
+   PORTFOLIO PAGE
+════════════════════════════════════════════ */
+
+/* User card */
+.port-user-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
+}
+.port-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green) 0%, #0fa84e 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: #070d0a;
+  flex-shrink: 0;
+}
+.port-user-info { flex: 1; }
+.port-user-name  { font-size: 14px; font-weight: 700; color: var(--text); }
+.port-user-email { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.port-logout-btn {
+  background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3);
+  color: var(--red); border-radius: 8px; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.18s; flex-shrink: 0;
+}
+.port-logout-btn:active { transform: scale(0.88); background: rgba(244,63,94,0.2); }
+
+/* Balance card */
+.port-balance-card {
+  background: linear-gradient(135deg, rgba(52,211,120,0.12) 0%, rgba(15,168,78,0.06) 100%);
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  padding: 22px 20px 16px; margin-bottom: 16px; position: relative; overflow: hidden;
+}
+.port-balance-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+}
+.port-balance-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; color: var(--green); margin-bottom: 8px;
+}
+.port-balance-value {
+  font-family: 'JetBrains Mono', monospace; font-size: clamp(22px, 6vw, 30px);
+  font-weight: 800; color: var(--text); letter-spacing: -0.5px; margin-bottom: 10px;
+}
+.port-pnl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.port-pnl-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+}
+.port-pnl-badge.up   { background: rgba(52,211,120,0.15); color: var(--green); }
+.port-pnl-badge.down { background: rgba(244,63,94,0.12);  color: var(--red); }
+.port-pnl-amount { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); }
+.port-balance-bars {
+  height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-bottom: 8px;
+}
+.port-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--green), var(--accent));
+  border-radius: 2px; transition: width 1s cubic-bezier(0.4,0,0.2,1);
+}
+.port-balance-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); }
+
+/* Portfolio holding card */
+.port-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 14px 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px; cursor: pointer; transition: all 0.18s;
+  position: relative; overflow: hidden;
+}
+.port-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--green); border-radius: 2px 0 0 2px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.port-card:active { transform: scale(0.98); background: var(--card2); }
+.port-card:active::before { opacity: 1; }
+
+.port-card-left  { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.port-card-info  { min-width: 0; }
+.port-card-ticker { font-size: 14px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.port-card-name   { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.port-card-meta   { display: flex; gap: 5px; margin-top: 4px; font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+.port-card-right  { text-align: right; flex-shrink: 0; }
+.port-card-value  { font-size: 14px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.port-card-pnl    { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 3px; display: flex; align-items: center; gap: 3px; justify-content: flex-end; }
+.port-card-pnl.up   { color: var(--green); }
+.port-card-pnl.down { color: var(--red); }
+.port-card-pnl-abs  { font-size: 10px; opacity: 0.75; }
+.port-card-qty    { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+/* Light mode overrides for new elements */
+.light .login-screen { background: var(--bg); }
+.light .login-feature,
+.light .port-user-card,
+.light .port-card { background: var(--card); border-color: var(--border); }
+
+/* ════════════════════════════════════════════
+   GOLD FAB — Add Stock Button
+════════════════════════════════════════════ */
+.port-fab {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: 20px auto 32px;
+  padding: 16px 28px; border-radius: 50px;
+  background: linear-gradient(135deg, #f5c842 0%, #e09c1a 100%);
+  color: #1a1000; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px;
+  cursor: pointer; user-select: none;
+  box-shadow: 0 0 28px rgba(245,200,66,0.45), 0 0 56px rgba(245,200,66,0.18), 0 4px 16px rgba(0,0,0,0.4);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  animation: goldPulse 3s ease-in-out infinite;
+  max-width: 280px;
+}
+.port-fab:active { transform: scale(0.94); box-shadow: 0 0 16px rgba(245,200,66,0.6); }
+.port-fab:hover  { box-shadow: 0 0 40px rgba(245,200,66,0.55), 0 0 72px rgba(245,200,66,0.22); }
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 28px rgba(245,200,66,0.45), 0 0 56px rgba(245,200,66,0.18), 0 4px 16px rgba(0,0,0,0.4); }
+  50%       { box-shadow: 0 0 44px rgba(245,200,66,0.65), 0 0 80px rgba(245,200,66,0.28), 0 4px 16px rgba(0,0,0,0.4); }
+}
+
+/* ════════════════════════════════════════════
+   ADD STOCK MODAL (Bottom Sheet)
+════════════════════════════════════════════ */
+.add-stock-modal-body {
+  max-height: 90vh; overflow-y: auto;
+  border-top: 1px solid rgba(245,200,66,0.25) !important;
+}
+.add-stock-modal-body::before {
+  content: ''; position: sticky; top: 0; left: 0; right: 0; height: 1px; display: block;
+  background: linear-gradient(90deg, transparent, rgba(245,200,66,0.4), transparent);
+}
+
+.add-stock-header { margin-bottom: 20px; margin-top: 4px; }
+.add-stock-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text);
+  margin-bottom: 4px;
+}
+.add-stock-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); }
+
+/* Search input */
+.add-stock-search-wrap {
+  position: relative; margin-bottom: 8px;
+}
+.add-stock-search-wrap svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--text3); pointer-events: none;
+}
+#add-stock-search {
+  width: 100%; padding: 12px 12px 12px 38px; border-radius: 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  outline: none; transition: border-color 0.2s;
+}
+#add-stock-search:focus { border-color: var(--gold); }
+
+/* Search result list */
+.add-stock-results { margin-bottom: 8px; border-radius: 12px; overflow: hidden; }
+.add-stock-result-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  background: var(--card); border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.add-stock-result-item:last-child { border-bottom: none; }
+.add-stock-result-item:active { background: var(--card2); }
+.add-stock-result-info { flex: 1; min-width: 0; }
+.add-stock-result-ticker { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: var(--text); }
+.add-stock-result-name   { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.add-stock-result-price  { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--gold); flex-shrink: 0; }
+
+/* Selected stock badge */
+.add-stock-selected {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.3);
+  border-radius: 12px; padding: 10px 14px; margin-bottom: 16px;
+}
+.add-stock-selected-inner { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.add-stock-clear {
+  background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer;
+  line-height: 1; padding: 2px 6px; border-radius: 6px; transition: color 0.2s;
+}
+.add-stock-clear:hover { color: var(--red); }
+
+/* Inputs */
+.add-stock-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+/* Preview card */
+.add-stock-preview {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;
+}
+.add-stock-preview-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+}
+.add-stock-preview-row:last-child { border-bottom: none; }
+
+/* Confirm button */
+.add-stock-confirm {
+  width: 100%; padding: 16px; border-radius: 14px;
+  background: linear-gradient(135deg, #f5c842 0%, #e09c1a 100%);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; color: #1a1000;
+  transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 0 20px rgba(245,200,66,0.35); margin-bottom: 12px;
+}
+.add-stock-confirm:not([disabled]):hover { box-shadow: 0 0 30px rgba(245,200,66,0.5); }
+.add-stock-confirm:not([disabled]):active { transform: scale(0.96); }
+.add-stock-confirm[disabled] {
+  opacity: 0.35; cursor: not-allowed;
+  background: var(--card); color: var(--text3); box-shadow: none;
+}
+
+/* Remove position button on port cards */
+.port-remove-btn {
+  background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.2);
+  color: var(--red); border-radius: 8px; width: 28px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.18s; margin-left: 6px;
+}
+/* ════════════════════════════════════════════
+   PERFORMANCE-FRIENDLY ANIMATIONS (Hardware Accelerated)
+════════════════════════════════════════════ */
+
+/* Ambient Breathing Background Glow */
+body::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 10% 0%, rgba(52,211,120,0.035) 0%, transparent 60%),
+              radial-gradient(circle at 90% 100%, rgba(245,200,66,0.02) 0%, transparent 40%);
+  pointer-events: none; z-index: -1;
+  animation: ambientBreathe 14s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+@keyframes ambientBreathe {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+/* Staggered Cascade Animation */
+.animate-stagger {
+  opacity: 0;
+  animation: staggerFadeSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+@keyframes staggerFadeSlide {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Nav indicator transition (already existing slightly, making it smoother) */
+.nav-item.active { position: relative; }
+.nav-item.active::after {
+  content: ''; position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 3px; border-radius: 0 0 3px 3px;
+  background: var(--green); box-shadow: 0 2px 8px var(--green-glow);
+  animation: navIndicatorIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes navIndicatorIn {
+  from { width: 0; opacity: 0; transform: translateX(-50%) translateY(-2px); }
+  to { width: 24px; opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+
+
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ══════════ HEADER ══════════ -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">W</div>
+      <div class="logo-text">WAMY</div>
+    </div>
+    <div class="header-center">
+      <div class="market-timer" id="market-timer">
+        <span class="market-dot"></span>
+        <span class="market-status" id="market-status">—</span>
+        <span class="market-time" id="market-time"></span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="btn-icon" id="btn-header-search" role="button" tabindex="0" aria-label="Rechercher">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <div class="theme-toggle" role="button" tabindex="0" aria-label="Changer le thème">
+        <div class="theme-toggle-knob">
+          <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ NAV TABS ══════════ -->
+  <div class="nav-tabs" id="nav-tabs">
+    <div class="tab active" data-tab="top"><span class="tab-dot"></span> Top</div>
+    <div class="tab" data-tab="tendances">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Tendances
+    </div>
+    <div class="tab" data-tab="hausses">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> Hausses
+    </div>
+    <div class="tab" data-tab="baisses">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg> Baisses
+    </div>
+    <div class="tab" data-tab="rendement">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Rendement
+    </div>
+  </div>
+
+  <!-- ══════════ PAGES WRAPPER ══════════ -->
+  <div class="pages-wrapper">
+
+  <!-- ══════════ PAGE: MARCHÉ ══════════ -->
+  <div class="page active" id="page-marche">
+    <div class="content">
+
+      <div class="masi-card fade-in">
+        <div class="masi-label"><span class="pulse"></span> MASI INDEX</div>
+        <div class="masi-value" id="masi-value">— —</div>
+        <div class="masi-change">
+          <span class="change-neg" id="masi-change"><span class="arrow-icon">▼</span> —</span>
+          <span class="masi-meta" id="masi-meta">—</span>
+        </div>
+        <div class="mini-chart">
+          <svg viewBox="0 0 300 50" preserveAspectRatio="none">
+            <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f43f5e" stop-opacity="0.3"/><stop offset="100%" stop-color="#f43f5e" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,20 C20,18 40,25 60,30 C80,35 100,38 120,32 C140,26 160,35 180,40 C200,44 220,38 240,30 C260,22 280,28 300,24" fill="none" stroke="#f43f5e" stroke-width="2"/>
+            <path d="M0,20 C20,18 40,25 60,30 C80,35 100,38 120,32 C140,26 160,35 180,40 C200,44 220,38 240,30 C260,22 280,28 300,24 L300,50 L0,50Z" fill="url(#chartGrad)"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="stats-row fade-in">
+        <div class="stat-card"><div class="stat-value green" id="stat-hausses">—</div><div class="stat-label">HAUSSES</div></div>
+        <div class="stat-card"><div class="stat-value red"   id="stat-baisses">—</div><div class="stat-label">BAISSES</div></div>
+        <div class="stat-card"><div class="stat-value gray"  id="stat-stables">—</div><div class="stat-label">STABLE</div></div>
+      </div>
+
+      <div class="summary-row fade-in">
+        <div class="summary-card"><div class="summary-card-label">CAPITALISATION</div><div class="summary-card-value" id="mkt-cap">—</div></div>
+        <div class="summary-card"><div class="summary-card-label">VOLUME</div><div class="summary-card-value" id="mkt-vol">—</div></div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Actions
+        </div>
+        <div class="section-action" id="stock-count">78 actions</div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-chip active" data-sector="all">Tous</div>
+        <div class="filter-chip" data-sector="banques">Banques</div>
+        <div class="filter-chip" data-sector="assurances">Assurances</div>
+        <div class="filter-chip" data-sector="mines">Mines</div>
+        <div class="filter-chip" data-sector="batiment">Bâtiment</div>
+        <div class="filter-chip" data-sector="energie">Énergie</div>
+        <div class="filter-chip" data-sector="telecom">Télécom</div>
+        <div class="filter-chip" data-sector="agroalimentaire">Agro</div>
+        <div class="filter-chip" data-sector="transport">Transport</div>
+        <div class="filter-chip" data-sector="immobilier">Immobilier</div>
+        <div class="filter-chip" data-sector="distribution">Auto</div>
+        <div class="filter-chip" data-sector="industrie">Industrie</div>
+        <div class="filter-chip" data-sector="sante">Santé</div>
+        <div class="filter-chip" data-sector="holding">Holding</div>
+      </div>
+
+      <div class="stock-table" id="stock-table"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: SEARCH ══════════ -->
+  <div class="page" id="page-search">
+    <div class="search-content">
+      <div style="padding-top:8px;">
+        <div class="page-title">Rechercher</div>
+        <div class="page-sub">78 sociétés cotées à la Bourse de Casablanca</div>
+      </div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-input" placeholder="Nom, ticker ou secteur (ex: ATW, Banques...)" autocomplete="off">
+      </div>
+      <div class="stock-table" id="search-results"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: OUTILS ══════════ -->
+  <div class="page" id="page-outils">
+    <div class="outils-content">
+      <div style="padding-top:8px;">
+        <div class="page-title">Outils</div>
+        <div class="page-sub">Calculateurs et analyses pour votre investissement</div>
+      </div>
+
+      <div class="calc-card">
+        <div class="calc-section-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          Calculateur de Coût
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;font-family:'JetBrains Mono',monospace;">Estimez le coût total incluant les frais bancaires</div>
+        <div id="calc-selected-badge" style="display:none;align-items:center;gap:8px;padding:10px 12px;background:var(--green-dim);border:1px solid var(--border2);border-radius:10px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);"></div>
+        <div class="input-group">
+          <div class="input-label">Prix de l'action <span class="input-badge">MAD</span></div>
+          <input type="number" class="calc-input" id="calc-price" placeholder="ex: 692.00" inputmode="decimal">
+        </div>
+        <div class="input-group">
+          <div class="input-label">Nombre d'actions <span class="input-badge">QTÉ</span></div>
+          <input type="number" class="calc-input" id="calc-qty" placeholder="ex: 10" inputmode="numeric">
+        </div>
+        <div class="input-group" style="margin-top:4px;">
+          <div class="input-label">Frais courtier <span class="input-badge">%</span></div>
+          <div class="broker-fee-row">
+            <div class="broker-btn active" data-fee="0.6">0.6%</div>
+            <div class="broker-btn" data-fee="0.8">0.8%</div>
+            <div class="broker-btn" data-fee="1.0">1.0%</div>
+            <input type="number" class="calc-input broker-custom" id="broker-fee-custom" placeholder="%" inputmode="decimal" step="0.1" min="0" max="5">
+          </div>
+          <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:6px;">+ TVA 10% + Taxes Bourse/Maroclear ~0.1%</div>
+        </div>
+        <div class="formula-box">
+          Prix × Qté + <strong id="fee-label">0.6%</strong> frais <span>=</span> Total
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="calc-section-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Résultat du Calcul
+        </div>
+        <div class="result-empty" id="result-empty">
+          <div style="font-size:32px;">🧮</div>
+          <div>Entrez un prix et une quantité<br>pour calculer votre coût</div>
+        </div>
+        <div class="result-content" id="result-content">
+          <div class="result-row"><span class="result-key">Sous-total brut</span><span class="result-val" id="res-subtotal" style="color:#f5c842;">—</span></div>
+          <div class="result-row"><span class="result-key" id="fees-label-result">Frais courtier</span><span class="result-val" style="color:var(--red)" id="res-fees">—</span></div>
+          <div class="result-row"><span class="result-key">Prix unitaire</span><span class="result-val" id="res-unit">—</span></div>
+          <div class="result-row" style="margin-top:8px;padding-top:12px;border-top:1px solid var(--border2);">
+            <span class="result-key" style="color:var(--text);font-weight:700;font-size:13px;">TOTAL À PAYER</span>
+            <span class="result-val total" id="res-total">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Référence Rapide
+        </div>
+        <div class="section-action" id="qr-count">78 actions</div>
+      </div>
+      <div class="qr-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="qr-search" placeholder="Chercher… nom, ticker, secteur" autocomplete="off">
+        <div class="qr-clear" id="qr-clear" role="button" aria-label="Effacer la recherche">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+      <div class="qr-strip" id="quick-ref"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: DIVIDENDES ══════════ -->
+  <div class="page" id="page-dividendes">
+    <div class="div-content">
+      <div style="padding-top:8px;">
+        <div class="page-title">Dividendes</div>
+        <div class="page-sub">Rendement des actions de la Bourse de Casablanca</div>
+      </div>
+      <div class="div-summary-row">
+        <div class="div-sum-card"><div class="div-sum-label">PLUS HAUT</div><div class="div-sum-val" id="div-highest" style="color:var(--green);">—</div><div class="div-sum-ticker" id="div-highest-name">—</div></div>
+        <div class="div-sum-card"><div class="div-sum-label">PLUS BAS</div><div class="div-sum-val" id="div-lowest" style="color:var(--red);">—</div><div class="div-sum-ticker" id="div-lowest-name">—</div></div>
+        <div class="div-sum-card"><div class="div-sum-label">MOY. MARCHÉ</div><div class="div-sum-val" id="div-avg" style="color:#f5c842;">—</div></div>
+      </div>
+      <div class="qr-search-wrap" style="margin-bottom:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="div-search" placeholder="Chercher une action…" autocomplete="off">
+        <div class="qr-clear" id="div-clear" role="button" aria-label="Effacer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+      <div class="div-sort-row">
+        <div class="div-sort-btn active" id="btn-yield">Rendement ↓</div>
+        <div class="div-sort-btn" data-key="div">Dividende</div>
+        <div class="div-sort-btn" data-key="price">Prix</div>
+        <div class="div-sort-btn" data-key="name">Nom A-Z</div>
+      </div>
+      <div id="div-list"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: FAVORIS ══════════ -->
+  <div class="page" id="page-favoris">
+    <div class="portfolio-content">
+      <div style="padding-top:8px;">
+        <div class="page-title">Mes Favoris</div>
+        <div class="page-sub">Vos actions suivies</div>
+      </div>
+      <div class="fav-section">
+        <div class="fav-header">
+          <div class="fav-title-wrap">
+            <div class="fav-star-glow">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#f5c842" stroke="#f5c842" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <span class="fav-title">Mes Favoris</span>
+            <span class="fav-count" id="fav-count">0</span>
+          </div>
+          <span class="fav-hint">Appuyez sur ☆ pour ajouter</span>
+        </div>
+        <div id="watchlist-container"></div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ══════════ PAGE: PORTFOLIO ══════════ -->
+  <div class="page" id="page-portfolio">
+    <div class="portfolio-content">
+      <div style="padding-top:8px;">
+        <div class="page-title">Mon Portefeuille</div>
+        <div class="page-sub">Compte Bourse simulé</div>
+      </div>
+
+      <!-- User card -->
+      <div class="port-user-card">
+        <div class="port-avatar" id="port-avatar">A</div>
+        <div class="port-user-info">
+          <div class="port-user-name" id="port-user-name">—</div>
+          <div class="port-user-email" id="port-user-email">—</div>
+        </div>
+        <button class="port-logout-btn" id="btn-logout" aria-label="Se déconnecter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+
+      <!-- Balance card -->
+      <div class="port-balance-card">
+        <div class="port-balance-label">SOLDE TOTAL</div>
+        <div class="port-balance-value" id="port-balance">—</div>
+        <div class="port-pnl-row">
+          <span class="port-pnl-badge up" id="port-pnl">+0.00%</span>
+          <span class="port-pnl-amount" id="port-pnl-amount">+0.00 MAD</span>
+        </div>
+        <div class="port-balance-bars">
+          <div class="port-bar-fill" id="port-bar-fill" style="width:65%"></div>
+        </div>
+        <div class="port-balance-meta">Valeur de marché · Position ouverte</div>
+      </div>
+
+      <!-- Holdings -->
+      <div class="section-header">
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          Positions Ouvertes
+        </div>
+        <div class="section-action" id="port-count">0 titres</div>
+      </div>
+      <div id="portfolio-list"></div>
+
+      <!-- Gold FAB — Add Stock -->
+      <div class="port-fab" id="btn-add-stock" role="button" tabindex="0" aria-label="Ajouter une action">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Ajouter une action</span>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- end .pages-wrapper -->
+</div><!-- end .shell -->
+
+<!-- ══════════ BOTTOM NAV ══════════ -->
+<nav class="bottom-nav">
+  <div class="nav-item active" id="nav-marche" data-page="marche" role="button" tabindex="0" aria-label="Marché">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+    <span>Marché</span>
+  </div>
+  <div class="nav-item" id="nav-search" data-page="search" role="button" tabindex="0" aria-label="Chercher">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <span>Chercher</span>
+  </div>
+  <div class="nav-item" id="nav-outils" data-page="outils" role="button" tabindex="0" aria-label="Outils">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    <span>Outils</span>
+  </div>
+  <div class="nav-item" id="nav-dividendes" data-page="dividendes" role="button" tabindex="0" aria-label="Dividendes">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <span>Divid.</span>
+  </div>
+  <div class="nav-item" id="nav-portfolio" data-page="portfolio" role="button" tabindex="0" aria-label="Mon Portefeuille">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <span>Compte</span>
+  </div>
+  <div class="nav-item" id="nav-favoris" data-page="favoris" role="button" tabindex="0" aria-label="Favoris">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span>Favoris</span>
+  </div>
+</nav>
+
+<!-- ══════════ STOCK DETAIL MODAL ══════════ -->
+<div class="modal-overlay" id="stock-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-avatar" id="modal-avatar"></div>
+      <div class="modal-title">
+        <div class="modal-name" id="modal-name"></div>
+        <div class="modal-ticker" id="modal-ticker"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:right;">COURS</div>
+        <div id="modal-change" style="display:flex;justify-content:flex-end;font-size:16px;font-weight:800;margin-top:2px;"></div>
+      </div>
+    </div>
+    <div class="modal-price-big" id="modal-price"></div>
+    <div class="modal-stats" id="modal-stats"></div>
+    <button class="modal-close" id="btn-modal-close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:6px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Fermer
+    </button>
+  </div>
+</div>
+
+<!-- ══════════ TOAST ══════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════ ADD STOCK MODAL ══════════ -->
+<div class="modal-overlay" id="add-stock-modal">
+  <div class="modal add-stock-modal-body">
+    <div class="modal-handle"></div>
+
+    <div class="add-stock-header">
+      <div class="add-stock-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5c842" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        Ajouter une Position
+      </div>
+      <div class="add-stock-sub">Saisir les informations de l'achat</div>
+    </div>
+
+    <!-- Stock search -->
+    <div class="add-stock-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="add-stock-search" placeholder="Rechercher une action... (ex: ATW, IAM)" autocomplete="off">
+    </div>
+    <div class="add-stock-results" id="add-stock-results"></div>
+    <div class="add-stock-selected" id="add-stock-selected" style="display:none">
+      <div class="add-stock-selected-inner" id="add-stock-selected-inner"></div>
+      <button class="add-stock-clear" id="add-stock-clear" aria-label="Changer l'action">×</button>
+    </div>
+
+    <!-- Inputs -->
+    <div class="add-stock-inputs">
+      <div class="input-group">
+        <div class="input-label">Quantité <span class="input-badge">TITRES</span></div>
+        <input type="number" class="calc-input" id="add-stock-qty" placeholder="ex: 10" inputmode="numeric" min="1">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Prix moyen d'achat <span class="input-badge">MAD</span></div>
+        <input type="number" class="calc-input" id="add-stock-price" placeholder="ex: 692.00" inputmode="decimal">
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="add-stock-preview" id="add-stock-preview" style="display:none">
+      <div class="add-stock-preview-row">
+        <span class="result-key">Valeur totale</span>
+        <span class="result-val" id="add-preview-total" style="color:var(--gold)">—</span>
+      </div>
+      <div class="add-stock-preview-row">
+        <span class="result-key">Cours actuel</span>
+        <span class="result-val" id="add-preview-current">—</span>
+      </div>
+      <div class="add-stock-preview-row">
+        <span class="result-key">P&amp;L immédiat</span>
+        <span class="result-val" id="add-preview-pnl">—</span>
+      </div>
+    </div>
+
+    <button class="add-stock-confirm" id="btn-add-stock-confirm" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Ajouter au Portefeuille
+    </button>
+    <button class="modal-close" id="btn-add-stock-close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:6px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Annuler
+    </button>
+  </div>
+</div>
+
+<!-- ══════════ LOGIN SCREEN ══════════ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-bg-glow"></div>
+  <div class="login-content">
+    <div class="login-logo-wrap">
+      <div class="login-logo-icon">W</div>
+      <div class="login-logo-shine"></div>
+    </div>
+    <div class="login-brand">WAMY</div>
+    <div class="login-tagline">Bourse de Casablanca<br>en temps réel</div>
+
+    <div class="login-features">
+      <div class="login-feature">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Cours en direct
+      </div>
+      <div class="login-feature">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Favoris &amp; Alertes
+      </div>
+      <div class="login-feature">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        Mon Portefeuille
+      </div>
+    </div>
+
+    <div class="login-form">
+      <input type="email" id="login-email" class="login-input" placeholder="Adresse e-mail">
+      <input type="password" id="login-pass" class="login-input" placeholder="Mot de passe">
+      <button class="login-btn-primary" id="btn-login-email">Se Connecter</button>
+    </div>
+
+    <div class="login-divider"><span>ou continuer avec</span></div>
+
+    <button class="login-btn-secondary" id="btn-login-google">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Google
+    </button>
+
+    <div class="login-skip" id="btn-login-demo">Continuer sans compte →</div>
+    <div class="login-disclaimer">Données simulées · 78 actions cotées</div>
+  </div>
+</div>
+
+<!-- ══════════ ES6 MODULE ENTRY POINT ══════════ -->
+<script>
+// === WAMY — Bundled Single File ===
+// ════════════════════════════════════════════════════════
+//  WAMY — Constants.js
+//  All static data and configuration constants
+// ════════════════════════════════════════════════════════
+
+const PAGES = ['marche', 'search', 'outils', 'dividendes', 'portfolio', 'favoris'];
+
+const MASI_DATA = {
+  value:    13847.22,
+  change:   -1.43,       // % daily change
+  points:   -200.95,     // point change
+  ytd:      -3.28,       // % year-to-date
+  cap:      '776.8B',    // total market cap in MAD
+  vol:      '287.4M',    // total daily volume in MAD
+};
+
+const MOCK_USER = {
+  name: 'Ayoub',
+  email: 'ayoub@wamy.ma',
+  avatar: 'A',
+  balance: 145200.00,
+  dailyPnl: +1.24,         // percent
+  dailyPnlAmount: 1782.50, // MAD
+};
+
+const MOCK_PORTFOLIO = [
+  { ticker: 'ATW', qty: 10,  avgPrice: 680  },
+  { ticker: 'BCP', qty: 50,  avgPrice: 285  },
+  { ticker: 'IAM', qty: 100, avgPrice: 92   },
+  { ticker: 'MNG', qty: 2,   avgPrice: 7400 },
+  { ticker: 'TQM', qty: 15,  avgPrice: 1750 },
+];
+
+
+const AVATAR_BG = {
+  banques: '1d4ed8', mines: '92400e', batiment: 'c2410c', energie: 'b45309',
+  telecom: '6d28d9', agroalimentaire: '166534', transport: '0f766e',
+  immobilier: '9f1239', assurances: '9d174d', distribution: 'b45309',
+  industrie: '1e40af', sante: '166534', holding: '581c87'
+};
+
+const SECTOR_LABELS = {
+  banques: 'Banques', mines: 'Mines', batiment: 'Bâtiment', energie: 'Énergie',
+  telecom: 'Télécom', agroalimentaire: 'Agro', transport: 'Transport',
+  immobilier: 'Immobilier', assurances: 'Assurances', distribution: 'Auto',
+  industrie: 'Industrie', sante: 'Santé', holding: 'Holding'
+};
+
+const SECTOR_COLORS = {
+  banques: 'c2', mines: 'c3', batiment: 'c6', energie: 'c3', telecom: 'c5',
+  agroalimentaire: 'c1', transport: 'c7', immobilier: 'c4', assurances: 'c8',
+  distribution: 'c6', industrie: 'c6', sante: 'c1', holding: 'c5'
+};
+
+const RAW_STOCKS = [
+  // BANQUES
+  { rank:1,  name:'Attijariwafa Bank',    ticker:'ATW',  sector:'banques',         price:692,    change:-3.20, vol:'50.23M', ytd:-7.10,  cap:'149.0B', div:34.5,  divYield:4.99, divFreq:'Annuel', divDate:'Mai 2025',  domain:'attijariwafabank.ma' },
+  { rank:2,  name:'Bank Of Africa',       ticker:'BOA',  sector:'banques',         price:219.5,  change:+0.23, vol:'47.32M', ytd:-4.57,  cap:'48.4B',  div:9.0,   divYield:4.10, divFreq:'Annuel', divDate:'Mai 2025',  domain:'bankofafrica.ma' },
+  { rank:3,  name:'BCP',                  ticker:'BCP',  sector:'banques',         price:253,    change:+0.40, vol:'2.58M',  ytd:-12.12, cap:'51.4B',  div:12.0,  divYield:4.74, divFreq:'Annuel', divDate:'Mai 2025',  domain:'gbp.ma' },
+  { rank:4,  name:'BMCI',                 ticker:'BMCI', sector:'banques',         price:640,    change:-0.62, vol:'0.41M',  ytd:-3.20,  cap:'8.6B',   div:32.0,  divYield:5.00, divFreq:'Annuel', divDate:'Juin 2025', domain:'bmci.ma' },
+  { rank:5,  name:'CFG Bank',             ticker:'CFG',  sector:'banques',         price:28.5,   change:+1.07, vol:'1.20M',  ytd:+8.30,  cap:'2.4B',   div:0.8,   divYield:2.81, divFreq:'Annuel', divDate:'Juin 2025', domain:'cfg.ma' },
+  { rank:6,  name:'CIH Bank',             ticker:'CIH',  sector:'banques',         price:356,    change:-0.84, vol:'3.12M',  ytd:-8.20,  cap:'13.5B',  div:17.0,  divYield:4.78, divFreq:'Annuel', divDate:'Mai 2025',  domain:'cihbank.ma' },
+  { rank:7,  name:'Crédit du Maroc',      ticker:'CDM',  sector:'banques',         price:580,    change:-1.19, vol:'0.28M',  ytd:-5.40,  cap:'5.8B',   div:27.0,  divYield:4.66, divFreq:'Annuel', divDate:'Juin 2025', domain:'creditdumaroc.ma' },
+  { rank:8,  name:'Salafin',              ticker:'SLF',  sector:'banques',         price:382,    change:-1.28, vol:'0.36M',  ytd:-5.90,  cap:'3.1B',   div:19.0,  divYield:4.97, divFreq:'Annuel', divDate:'Mai 2025',  domain:'salafin.ma' },
+  // ASSURANCES
+  { rank:9,  name:'AFMA SA',              ticker:'AFM',  sector:'assurances',      price:1350,   change:+0.52, vol:'0.12M',  ytd:+3.10,  cap:'2.7B',   div:55.0,  divYield:4.07, divFreq:'Annuel', divDate:'Juin 2025', domain:'afma.ma' },
+  { rank:10, name:'Agma Lahlou-Tazi',     ticker:'AGM',  sector:'assurances',      price:4250,   change:-0.47, vol:'0.08M',  ytd:+1.90,  cap:'3.4B',   div:200.0, divYield:4.71, divFreq:'Annuel', divDate:'Juin 2025', domain:'agma.ma' },
+  { rank:11, name:'AtlantaSanad',         ticker:'ATL',  sector:'assurances',      price:140,    change:+0.72, vol:'0.54M',  ytd:+5.40,  cap:'8.4B',   div:6.0,   divYield:4.29, divFreq:'Annuel', divDate:'Juin 2025', domain:'atlantasanad.ma' },
+  { rank:12, name:'Sanlam Maroc',         ticker:'SAH',  sector:'assurances',      price:1120,   change:-0.35, vol:'0.09M',  ytd:-2.60,  cap:'4.5B',   div:48.0,  divYield:4.29, divFreq:'Annuel', divDate:'Juin 2025', domain:'sanlam.ma' },
+  { rank:13, name:'Wafa Assurance',       ticker:'WAA',  sector:'assurances',      price:4200,   change:-0.95, vol:'0.89M',  ytd:+2.10,  cap:'31.5B',  div:210.0, divYield:5.00, divFreq:'Annuel', divDate:'Juin 2025', domain:'wafaassurance.ma' },
+  // MINES
+  { rank:14, name:'Managem',              ticker:'MNG',  sector:'mines',           price:7901,   change:-1.30, vol:'13.74M', ytd:+21.55, cap:'93.7B',  div:200.0, divYield:2.53, divFreq:'Annuel', divDate:'Juin 2025', domain:'managemgroup.com' },
+  { rank:15, name:'Minière Touissit',     ticker:'CMT',  sector:'mines',           price:1840,   change:+0.87, vol:'0.32M',  ytd:+14.20, cap:'7.4B',   div:75.0,  divYield:4.08, divFreq:'Annuel', divDate:'Juin 2025', domain:'cmtmaroc.ma' },
+  { rank:16, name:'Smi',                  ticker:'SMI',  sector:'mines',           price:2250,   change:-0.44, vol:'0.18M',  ytd:+9.80,  cap:'6.3B',   div:90.0,  divYield:4.00, divFreq:'Annuel', divDate:'Juin 2025', domain:'smi.ma' },
+  { rank:17, name:'Sonasid',              ticker:'SID',  sector:'mines',           price:382,    change:-2.04, vol:'0.54M',  ytd:-12.30, cap:'2.3B',   div:15.0,  divYield:3.93, divFreq:'Annuel', divDate:'Juin 2025', domain:'sonasid.ma' },
+  { rank:18, name:'Delta Holding',        ticker:'DHO',  sector:'mines',           price:35.8,   change:+0.56, vol:'1.90M',  ytd:+5.40,  cap:'5.4B',   div:1.2,   divYield:3.35, divFreq:'Annuel', divDate:'Juin 2025', domain:'deltaholding.ma' },
+  { rank:19, name:'Zellidja S.A.',        ticker:'ZDJ',  sector:'mines',           price:325,    change:-1.52, vol:'0.14M',  ytd:-8.70,  cap:'1.6B',   div:12.0,  divYield:3.69, divFreq:'Annuel', divDate:'Juin 2025', domain:'zellidja.ma' },
+  // BÂTIMENT
+  { rank:20, name:'Ciments du Maroc',     ticker:'CMA',  sector:'batiment',        price:1730,   change:-3.35, vol:'11.80M', ytd:-7.39,  cap:'25.0B',  div:85.0,  divYield:4.91, divFreq:'Annuel', divDate:'Mai 2025',  domain:'cimentsdumaroc.com' },
+  { rank:21, name:'LafargeHolcim Maroc',  ticker:'LHM',  sector:'batiment',        price:1750,   change:-1.57, vol:'6.35M',  ytd:-5.41,  cap:'41.0B',  div:90.0,  divYield:5.14, divFreq:'Annuel', divDate:'Juin 2025', domain:'lafargeholcim.ma' },
+  { rank:22, name:'SGTM',                 ticker:'GTM',  sector:'batiment',        price:720,    change:-1.37, vol:'11.40M', ytd:-23.40, cap:'43.2B',  div:28.0,  divYield:3.89, divFreq:'Annuel', divDate:'Juil 2025', domain:'sgtm.ma' },
+  { rank:23, name:'TGCC',                 ticker:'TGC',  sector:'batiment',        price:720,    change:-2.04, vol:'6.89M',  ytd:-22.99, cap:'25.0B',  div:22.0,  divYield:3.06, divFreq:'Annuel', divDate:'Juil 2025', domain:'tgcc.ma' },
+  { rank:24, name:'Colorado',             ticker:'COL',  sector:'batiment',        price:62,     change:-1.59, vol:'0.78M',  ytd:-18.40, cap:'2.5B',   div:2.5,   divYield:4.03, divFreq:'Annuel', divDate:'Juil 2025', domain:'colorado.ma' },
+  { rank:25, name:'Afric Industries',     ticker:'AFI',  sector:'batiment',        price:390,    change:+0.26, vol:'0.15M',  ytd:+4.50,  cap:'1.2B',   div:14.0,  divYield:3.59, divFreq:'Annuel', divDate:'Juin 2025', domain:'africindustries.ma' },
+  { rank:26, name:'Jet Contractors',      ticker:'JET',  sector:'batiment',        price:285,    change:-0.70, vol:'0.22M',  ytd:-11.80, cap:'2.1B',   div:10.0,  divYield:3.51, divFreq:'Annuel', divDate:'Juil 2025', domain:'jetcontractors.ma' },
+  { rank:27, name:'Delattre Levivier',    ticker:'DLM',  sector:'batiment',        price:120,    change:+1.69, vol:'0.34M',  ytd:+7.20,  cap:'0.8B',   div:4.5,   divYield:3.75, divFreq:'Annuel', divDate:'Juin 2025', domain:'dlm.ma' },
+  // ÉNERGIE
+  { rank:28, name:'Taqa Morocco',         ticker:'TQM',  sector:'energie',         price:1835,   change:+2.23, vol:'129M',   ytd:-14.85, cap:'43.3B',  div:113.0, divYield:6.16, divFreq:'Annuel', divDate:'Juin 2025', domain:'taqamorocco.ma' },
+  { rank:29, name:'TotalEnergies Maroc',  ticker:'TMA',  sector:'energie',         price:1850,   change:-0.54, vol:'0.65M',  ytd:-1.20,  cap:'11.1B',  div:82.0,  divYield:4.43, divFreq:'Annuel', divDate:'Juin 2025', domain:'totalenergies.ma' },
+  { rank:30, name:'Maghreb Oxygène',      ticker:'MOX',  sector:'energie',         price:620,    change:+0.49, vol:'0.11M',  ytd:+2.80,  cap:'1.6B',   div:24.0,  divYield:3.87, divFreq:'Annuel', divDate:'Juin 2025', domain:'maghreboxy.ma' },
+  { rank:31, name:'Afriquia Gaz',         ticker:'GAZ',  sector:'energie',         price:4320,   change:-0.28, vol:'0.24M',  ytd:+5.10,  cap:'10.8B',  div:180.0, divYield:4.17, divFreq:'Annuel', divDate:'Juin 2025', domain:'afriquiagaz.ma' },
+  // TÉLÉCOM & TECH
+  { rank:32, name:'Maroc Telecom',        ticker:'IAM',  sector:'telecom',         price:94.3,   change:-1.67, vol:'5.88M',  ytd:-15.12, cap:'82.9B',  div:6.38,  divYield:6.77, divFreq:'Annuel', divDate:'Juin 2025', domain:'iam.ma' },
+  { rank:33, name:'HPS',                  ticker:'HPS',  sector:'telecom',         price:6520,   change:+1.24, vol:'0.31M',  ytd:+18.90, cap:'12.9B',  div:175.0, divYield:2.68, divFreq:'Annuel', divDate:'Juin 2025', domain:'hps-worldwide.com' },
+  { rank:34, name:'Involys',              ticker:'INV',  sector:'telecom',         price:56.5,   change:+0.89, vol:'0.22M',  ytd:+4.10,  cap:'0.6B',   div:2.0,   divYield:3.54, divFreq:'Annuel', divDate:'Juil 2025', domain:'involys.com' },
+  { rank:35, name:'M2M Group',            ticker:'M2M',  sector:'telecom',         price:780,    change:+2.10, vol:'0.18M',  ytd:+12.40, cap:'1.6B',   div:24.0,  divYield:3.08, divFreq:'Annuel', divDate:'Juin 2025', domain:'m2mgroup.com' },
+  { rank:36, name:'Disty Technologies',   ticker:'DYT',  sector:'telecom',         price:180,    change:-0.55, vol:'0.19M',  ytd:-3.80,  cap:'0.7B',   div:6.0,   divYield:3.33, divFreq:'Annuel', divDate:'Juin 2025', domain:'disty.ma' },
+  { rank:37, name:'Disway',               ticker:'DWY',  sector:'telecom',         price:420,    change:+0.72, vol:'0.14M',  ytd:+6.20,  cap:'0.5B',   div:15.0,  divYield:3.57, divFreq:'Annuel', divDate:'Juin 2025', domain:'disway.ma' },
+  { rank:38, name:'IB Maroc.com',         ticker:'IBC',  sector:'telecom',         price:42.5,   change:-1.16, vol:'0.08M',  ytd:-7.40,  cap:'0.2B',   div:1.5,   divYield:3.53, divFreq:'Annuel', divDate:'Juil 2025', domain:'ibmaroc.com' },
+  { rank:39, name:'Microdata',            ticker:'MIC',  sector:'telecom',         price:350,    change:+0.29, vol:'0.06M',  ytd:+1.50,  cap:'0.3B',   div:12.0,  divYield:3.43, divFreq:'Annuel', divDate:'Juin 2025', domain:'microdata.ma' },
+  { rank:40, name:'S.M. Monétique',       ticker:'SMM',  sector:'telecom',         price:1250,   change:+1.63, vol:'0.09M',  ytd:+9.30,  cap:'1.1B',   div:50.0,  divYield:4.00, divFreq:'Annuel', divDate:'Juin 2025', domain:'sm-monetique.com' },
+  { rank:41, name:'Cash Plus',            ticker:'CAP',  sector:'telecom',         price:360,    change:+0.84, vol:'0.11M',  ytd:+5.60,  cap:'0.7B',   div:14.0,  divYield:3.89, divFreq:'Annuel', divDate:'Juin 2025', domain:'cashplus.ma' },
+  // AGROALIMENTAIRE
+  { rank:42, name:'Cosumar',              ticker:'CSR',  sector:'agroalimentaire', price:188,    change:-1.57, vol:'8.30M',  ytd:-9.18,  cap:'17.8B',  div:9.5,   divYield:5.05, divFreq:'Annuel', divDate:'Juin 2025', domain:'cosumar.ma' },
+  { rank:43, name:'Label Vie',            ticker:'LBV',  sector:'agroalimentaire', price:5400,   change:-1.10, vol:'0.42M',  ytd:-3.70,  cap:'20.1B',  div:180.0, divYield:3.33, divFreq:'Annuel', divDate:'Juil 2025', domain:'labelvie.ma' },
+  { rank:44, name:'Lesieur Cristal',      ticker:'LES',  sector:'agroalimentaire', price:165,    change:-0.60, vol:'1.20M',  ytd:-4.90,  cap:'6.6B',   div:7.5,   divYield:4.55, divFreq:'Annuel', divDate:'Juin 2025', domain:'lesieurchristal.ma' },
+  { rank:45, name:'Mutandis',             ticker:'MUT',  sector:'agroalimentaire', price:123,    change:-0.81, vol:'1.10M',  ytd:-7.60,  cap:'2.8B',   div:4.5,   divYield:3.66, divFreq:'Annuel', divDate:'Juin 2025', domain:'mutandis.ma' },
+  { rank:46, name:'Oulmès',               ticker:'OUL',  sector:'agroalimentaire', price:2350,   change:+0.43, vol:'0.19M',  ytd:+3.80,  cap:'6.6B',   div:85.0,  divYield:3.62, divFreq:'Annuel', divDate:'Juin 2025', domain:'oulmes.ma' },
+  { rank:47, name:'Cartier Saada',        ticker:'CRS',  sector:'agroalimentaire', price:48,     change:-2.04, vol:'0.32M',  ytd:-14.20, cap:'0.5B',   div:1.5,   divYield:3.13, divFreq:'Annuel', divDate:'Juil 2025', domain:'cartier-saada.ma' },
+  { rank:48, name:'Dari Couspate',        ticker:'DRI',  sector:'agroalimentaire', price:3150,   change:+0.64, vol:'0.14M',  ytd:+8.70,  cap:'3.5B',   div:110.0, divYield:3.49, divFreq:'Annuel', divDate:'Juin 2025', domain:'dari-couspate.com' },
+  { rank:49, name:'Unimer',               ticker:'UMR',  sector:'agroalimentaire', price:75,     change:-1.32, vol:'0.28M',  ytd:-9.30,  cap:'1.1B',   div:2.5,   divYield:3.33, divFreq:'Annuel', divDate:'Juin 2025', domain:'unimer.ma' },
+  { rank:50, name:'SBM',                  ticker:'SBM',  sector:'agroalimentaire', price:2150,   change:+0.23, vol:'0.12M',  ytd:+2.90,  cap:'3.2B',   div:80.0,  divYield:3.72, divFreq:'Annuel', divDate:'Juin 2025', domain:'sbm.ma' },
+  // TRANSPORT
+  { rank:51, name:'Marsa Maroc',          ticker:'MSA',  sector:'transport',       price:775,    change:-1.41, vol:'38.32M', ytd:-19.78, cap:'56.9B',  div:46.0,  divYield:5.94, divFreq:'Annuel', divDate:'Juin 2025', domain:'marsamaroc.ma' },
+  { rank:52, name:'CTM',                  ticker:'CTM',  sector:'transport',       price:1540,   change:-0.32, vol:'0.21M',  ytd:-2.50,  cap:'4.0B',   div:55.0,  divYield:3.57, divFreq:'Annuel', divDate:'Juin 2025', domain:'ctm.ma' },
+  { rank:53, name:'Timar',                ticker:'TIM',  sector:'transport',       price:385,    change:+0.26, vol:'0.08M',  ytd:+1.80,  cap:'0.5B',   div:14.0,  divYield:3.64, divFreq:'Annuel', divDate:'Juin 2025', domain:'timar.ma' },
+  // IMMOBILIER
+  { rank:54, name:'Addoha',               ticker:'ADH',  sector:'immobilier',      price:18.5,   change:-2.63, vol:'62.40M', ytd:-15.80, cap:'9.3B',   div:0.5,   divYield:2.70, divFreq:'Annuel', divDate:'Juil 2025', domain:'addoha.ma' },
+  { rank:55, name:'Alliances Immobilier', ticker:'ADI',  sector:'immobilier',      price:45.2,   change:-1.09, vol:'4.20M',  ytd:-22.10, cap:'3.8B',   div:1.5,   divYield:3.32, divFreq:'Annuel', divDate:'Juil 2025', domain:'alliancesdeveloppement.ma' },
+  { rank:56, name:'Aradei Capital',       ticker:'ARD',  sector:'immobilier',      price:480,    change:+0.42, vol:'0.31M',  ytd:+5.20,  cap:'4.8B',   div:20.0,  divYield:4.17, divFreq:'Annuel', divDate:'Juin 2025', domain:'aradeicapital.com' },
+  { rank:57, name:'Balima',               ticker:'BAL',  sector:'immobilier',      price:148,    change:-0.67, vol:'0.09M',  ytd:-4.50,  cap:'0.7B',   div:6.0,   divYield:4.05, divFreq:'Annuel', divDate:'Juin 2025', domain:'balima.ma' },
+  { rank:58, name:'Immorente Invest',     ticker:'IMO',  sector:'immobilier',      price:105,    change:+0.96, vol:'0.22M',  ytd:+4.90,  cap:'2.1B',   div:4.5,   divYield:4.29, divFreq:'Annuel', divDate:'Juin 2025', domain:'immorente.ma' },
+  { rank:59, name:'Résidences Dar Saada', ticker:'RDS',  sector:'immobilier',      price:38.5,   change:-1.54, vol:'1.80M',  ytd:-18.60, cap:'2.1B',   div:1.2,   divYield:3.12, divFreq:'Annuel', divDate:'Juil 2025', domain:'darsaada.ma' },
+  // DISTRIBUTION AUTO
+  { rank:60, name:'Auto Hall',            ticker:'ATH',  sector:'distribution',    price:78,     change:+0.65, vol:'1.24M',  ytd:+3.40,  cap:'4.4B',   div:3.5,   divYield:4.49, divFreq:'Annuel', divDate:'Juin 2025', domain:'autohall.ma' },
+  { rank:61, name:'Auto Nejma',           ticker:'NEJ',  sector:'distribution',    price:1820,   change:-0.55, vol:'0.07M',  ytd:-1.90,  cap:'1.8B',   div:70.0,  divYield:3.85, divFreq:'Annuel', divDate:'Juin 2025', domain:'autonejmavw.com' },
+  { rank:62, name:'Ennakl Automobiles',   ticker:'NKL',  sector:'distribution',    price:140,    change:+1.45, vol:'0.35M',  ytd:+7.80,  cap:'1.0B',   div:5.5,   divYield:3.93, divFreq:'Annuel', divDate:'Juin 2025', domain:'ennakl.com.tn' },
+  // INDUSTRIE
+  { rank:63, name:'Snep',                 ticker:'SNP',  sector:'industrie',       price:880,    change:-0.34, vol:'0.16M',  ytd:-2.80,  cap:'2.6B',   div:35.0,  divYield:3.98, divFreq:'Annuel', divDate:'Juin 2025', domain:'snep.ma' },
+  { rank:64, name:'Aluminium du Maroc',   ticker:'ALM',  sector:'industrie',       price:1560,   change:+0.78, vol:'0.12M',  ytd:+5.40,  cap:'3.1B',   div:60.0,  divYield:3.85, divFreq:'Annuel', divDate:'Juin 2025', domain:'aluminium-maroc.com' },
+  { rank:65, name:'Fenie Brossette',      ticker:'FBR',  sector:'industrie',       price:310,    change:-0.64, vol:'0.09M',  ytd:-4.60,  cap:'1.6B',   div:12.0,  divYield:3.87, divFreq:'Annuel', divDate:'Juin 2025', domain:'feniebrossette.ma' },
+  { rank:66, name:'Med Paper',            ticker:'MDP',  sector:'industrie',       price:58,     change:-1.69, vol:'0.28M',  ytd:-12.10, cap:'0.6B',   div:2.0,   divYield:3.45, divFreq:'Annuel', divDate:'Juil 2025', domain:'medpaper.ma' },
+  { rank:67, name:'Maghrebail',           ticker:'MAB',  sector:'industrie',       price:430,    change:+0.47, vol:'0.11M',  ytd:+3.10,  cap:'1.3B',   div:17.0,  divYield:3.95, divFreq:'Annuel', divDate:'Juin 2025', domain:'maghrebail.ma' },
+  { rank:68, name:'Maroc Leasing',        ticker:'MLE',  sector:'industrie',       price:265,    change:-0.37, vol:'0.08M',  ytd:-2.40,  cap:'0.8B',   div:10.0,  divYield:3.77, divFreq:'Annuel', divDate:'Juin 2025', domain:'marocleasing.ma' },
+  { rank:69, name:'Réalisations Méca.',   ticker:'SRM',  sector:'industrie',       price:1940,   change:+0.52, vol:'0.06M',  ytd:+4.20,  cap:'1.9B',   div:75.0,  divYield:3.87, divFreq:'Annuel', divDate:'Juin 2025', domain:'srm.ma' },
+  // SANTÉ
+  { rank:70, name:'Akdital',              ticker:'AKT',  sector:'sante',           price:480,    change:+2.78, vol:'0.58M',  ytd:+22.40, cap:'14.4B',  div:8.0,   divYield:1.67, divFreq:'Annuel', divDate:'Juin 2025', domain:'akdital.ma' },
+  { rank:71, name:'Promopharm',           ticker:'PRO',  sector:'sante',           price:1450,   change:+0.35, vol:'0.14M',  ytd:+6.20,  cap:'2.9B',   div:55.0,  divYield:3.79, divFreq:'Annuel', divDate:'Juin 2025', domain:'promopharm.ma' },
+  { rank:72, name:'Sothema',              ticker:'SOT',  sector:'sante',           price:2250,   change:-0.44, vol:'0.19M',  ytd:+8.40,  cap:'5.6B',   div:90.0,  divYield:4.00, divFreq:'Annuel', divDate:'Juin 2025', domain:'sothema.com' },
+  // HOLDING
+  { rank:73, name:'Al Mada',              ticker:'ALM2', sector:'holding',         price:2100,   change:+0.19, vol:'0.42M',  ytd:+3.80,  cap:'45.0B',  div:70.0,  divYield:3.33, divFreq:'Annuel', divDate:'Juin 2025', domain:'almada.ma' },
+  { rank:74, name:'Eqdom',                ticker:'EQD',  sector:'holding',         price:960,    change:-0.31, vol:'0.11M',  ytd:-2.10,  cap:'3.8B',   div:40.0,  divYield:4.17, divFreq:'Annuel', divDate:'Juin 2025', domain:'eqdom.ma' },
+  { rank:75, name:'Rebab Company',        ticker:'REB',  sector:'holding',         price:24.5,   change:+1.24, vol:'0.09M',  ytd:+6.40,  cap:'0.4B',   div:0.8,   divYield:3.27, divFreq:'Annuel', divDate:'Juil 2025', domain:'rebab.ma' },
+  { rank:76, name:'Risma',                ticker:'RIS',  sector:'holding',         price:175,    change:+1.16, vol:'0.34M',  ytd:+12.80, cap:'2.6B',   div:5.0,   divYield:2.86, divFreq:'Annuel', divDate:'Juin 2025', domain:'risma.ma' },
+  { rank:77, name:'Valoris',              ticker:'VAL',  sector:'holding',         price:162,    change:+0.62, vol:'0.12M',  ytd:+4.10,  cap:'0.8B',   div:6.0,   divYield:3.70, divFreq:'Annuel', divDate:'Juin 2025', domain:'valoris.ma' },
+  // SUSPENDU
+  { rank:78, name:'Samir (Suspendu)',     ticker:'SAM',  sector:'energie',         price:0,      change:0,     vol:'—',      ytd:0,      cap:'—',      div:0,     divYield:0,    divFreq:'—',      divDate:'Suspendu',  domain:'samir.ma' },
+];
+
+// ════════════════════════════════════════════════════════
+//  WAMY — Stock.js
+//  Data Model: Encapsulates all stock data and computations
+// ════════════════════════════════════════════════════════
+
+
+class Stock {
+  constructor(data) {
+    this.rank      = data.rank;
+    this.name      = data.name;
+    this.ticker    = data.ticker;
+    this.sector    = data.sector;
+    this.price     = data.price;
+    this.change    = data.change;
+    this.vol       = data.vol;
+    this.ytd       = data.ytd;
+    this.cap       = data.cap;
+    this.div       = data.div;
+    this.divYield  = data.divYield;
+    this.divFreq   = data.divFreq;
+    this.divDate   = data.divDate;
+    this.domain    = data.domain;
+  }
+
+  /** Returns price formatted in MAD via Intl.NumberFormat */
+  formatPrice() {
+    if (!this.price) return '—';
+    return new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(this.price) + ' MAD';
+  }
+
+  /** Returns 'up', 'down', or 'neutral' */
+  getTrend() {
+    if (this.change > 0)  return 'up';
+    if (this.change < 0)  return 'down';
+    return 'neutral';
+  }
+
+  /** Returns true if the stock is suspended trading */
+  isSuspended() {
+    return this.ticker === 'SAM';
+  }
+
+  /** Returns the sector display label */
+  getSectorLabel() {
+    return SECTOR_LABELS[this.sector] || this.sector;
+  }
+
+  /** Returns the sector CSS color class */
+  getSectorColor() {
+    return SECTOR_COLORS[this.sector] || 'c1';
+  }
+
+  /** Returns the full avatar img URL for use as a logo */
+  getLogoUrl(size = 128) {
+    const bg      = AVATAR_BG[this.sector] || '15803d';
+    const letters = this.ticker.replace(/[^A-Z0-9]/g, '').slice(0, 3)
+                    || this.ticker.slice(0, 2).toUpperCase();
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(letters)}&background=${bg}&color=ffffff&size=${size}&bold=true&font-size=0.4`;
+  }
+
+  /** Returns the HTML string for the stock avatar/logo block */
+  getLogoHTML(size = 34) {
+    const br    = size <= 28 ? '8px' : '9px';
+    const color = this.getSectorColor();
+    const url   = this.getLogoUrl(128);
+    return `<div class="stock-avatar logo-wrap ${color}" style="width:${size}px;height:${size}px;border-radius:${br};">
+      <img src="${url}" class="company-logo avatar-visible" alt="${this.ticker}">
+    </div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  WAMY — UIController.js
+//  View Layer: Static methods for all DOM manipulation
+// ════════════════════════════════════════════════════════
+
+class UIController {
+
+  /** Generates sparkline SVG for a given change value */
+  static generateSparkline(change) {
+    const up    = change >= 0;
+    const color = up ? 'var(--green)' : 'var(--red)';
+    const pts   = [0,1,2,3,4,5,6,7].map(i => {
+      const noise = (Math.random() - 0.5) * 8;
+      return `${i * 7},${up ? 28 - i * 2 + noise : 20 + i * 1.5 + noise}`;
+    }).join(' ');
+    return `<svg viewBox="0 0 56 32" preserveAspectRatio="none">
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  /**
+   * Generates HTML string for a single stock row card.
+   * Accessibility: arrow icons (▲/▼) always present alongside color.
+   */
+  static createStockCard(stock, isStarred, index = 0) {
+    const trend     = stock.getTrend();
+    const up        = trend === 'up';
+    const suspended = stock.isSuspended();
+    const dir       = suspended ? 'neutral' : trend;
+
+    return `
+      <div class="stock-row ${dir} fade-in${suspended ? ' suspended' : ''}"
+           data-ticker="${stock.ticker}" role="button" tabindex="0"
+           aria-label="${stock.name}, ${stock.ticker}, ${stock.getSectorLabel()}">
+        <div class="stock-rank">${stock.rank}</div>
+        ${stock.getLogoHTML(34)}
+        <div class="stock-info">
+          <div class="stock-name">${stock.name}</div>
+          <div class="stock-sector">${stock.ticker} · ${stock.getSectorLabel()}</div>
+        </div>
+        <div class="stock-chart">${suspended ? '' : UIController.generateSparkline(stock.change)}</div>
+        <div class="stock-right">
+          <div class="stock-price">
+            ${suspended ? '—' : stock.price.toLocaleString('fr-FR')}
+            <span style="font-size:10px;color:var(--text3);">MAD</span>
+          </div>
+          <div class="stock-change ${dir}" aria-label="${suspended ? 'Suspendu' : (up ? 'Hausse' : 'Baisse') + ' ' + Math.abs(stock.change).toFixed(2) + '%'}">
+            ${suspended
+              ? '<span style="color:var(--text3);font-size:10px;">Suspendu</span>'
+              : `<span class="arrow-icon" aria-hidden="true">${up ? '▲' : '▼'}</span> ${Math.abs(stock.change).toFixed(2)}%`}
+          </div>
+          <div style="display:flex;gap:4px;margin-top:2px;justify-content:flex-end;flex-wrap:wrap;">
+            <div class="stock-cap">${stock.cap}</div>
+            ${stock.divYield > 0 ? `<span class="div-badge">${stock.divYield.toFixed(2)}%</span>` : ''}
+          </div>
+        </div>
+        <div class="star-btn ${isStarred ? 'starred' : ''}"
+             data-star="${stock.ticker}" role="button" tabindex="0"
+             aria-label="${isStarred ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+          <svg width="14" height="14" viewBox="0 0 24 24"
+               fill="${isStarred ? '#f5c842' : 'none'}"
+               stroke="${isStarred ? '#f5c842' : 'currentColor'}" stroke-width="1.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+      </div>`;
+  }
+
+  /**
+   * Renders a list of Stock instances into a container efficiently.
+   */
+  static renderList(containerId, stocks, watchlist) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!stocks || !stocks.length) {
+      container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">Aucun résultat trouvé</div>`;
+      return;
+    }
+    container.innerHTML = stocks.map((s, i) => UIController.createStockCard(s, watchlist.has(s.ticker), i)).join('');
+  }
+
+  /** Skeleton loading placeholders */
+  static renderSkeleton(containerId, count = 6) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = Array.from({ length: count }, () => `
+      <div class="stock-row skeleton-row">
+        <div class="skel skel-rank"></div>
+        <div class="skel skel-avatar"></div>
+        <div class="stock-info">
+          <div class="skel skel-name"></div>
+          <div class="skel skel-sector"></div>
+        </div>
+        <div class="stock-right">
+          <div class="skel skel-price"></div>
+          <div class="skel skel-change"></div>
+        </div>
+      </div>`).join('');
+  }
+
+  /** Updates the market status timer in the header. */
+  static updateMarketStatus(isOpen, statusText, timeText) {
+    const timerEl  = document.getElementById('market-timer');
+    const statusEl = document.getElementById('market-status');
+    const timeEl   = document.getElementById('market-time');
+    if (!timerEl) return;
+    timerEl.className  = 'market-timer ' + (isOpen ? 'open' : 'closed');
+    if (statusEl) statusEl.textContent = statusText;
+    if (timeEl)   timeEl.textContent   = timeText;
+  }
+
+  /** Toggle dark/light theme on body */
+  static toggleTheme(isLight) {
+    document.body.classList.toggle('light', isLight);
+    const moon = document.getElementById('icon-moon');
+    const sun  = document.getElementById('icon-sun');
+    if (moon) moon.style.display = isLight ? 'none'  : 'block';
+    if (sun)  sun.style.display  = isLight ? 'block' : 'none';
+  }
+
+  static showToast(msg) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.innerHTML = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  /** Populates the stock detail modal */
+  static showStockModal(stock) {
+    if (!stock) return;
+    const el = id => document.getElementById(id);
+    const avEl = el('modal-avatar');
+    if (avEl) {
+      avEl.innerHTML = `<img src="${stock.getLogoUrl(192)}"
+        style="width:100%;height:100%;object-fit:cover;border-radius:14px;" alt="${stock.ticker}">`;
+    }
+    const up = stock.getTrend() === 'up';
+    const suspended = stock.isSuspended();
+    if (el('modal-name'))   el('modal-name').textContent   = stock.name;
+    if (el('modal-ticker')) el('modal-ticker').textContent = `${stock.ticker} · ${stock.getSectorLabel()}`;
+    if (el('modal-price'))  el('modal-price').textContent  = suspended ? 'Suspendu' : stock.formatPrice();
+
+    const chEl = el('modal-change');
+    if (chEl) {
+      chEl.className = 'stock-change ' + (up ? 'up' : 'down');
+      chEl.innerHTML = stock.change !== 0
+        ? `<span class="arrow-icon" aria-hidden="true">${up ? '▲' : '▼'}</span> ${Math.abs(stock.change).toFixed(2)}%`
+        : '—';
+      chEl.style.justifyContent = 'flex-end';
+    }
+
+    const stEl = el('modal-stats');
+    if (stEl) {
+      stEl.innerHTML = [
+        ['VOLUME',        stock.vol],
+        ['YTD',           stock.ytd !== 0 ? (stock.ytd > 0 ? '+' : '') + stock.ytd + '%' : '—'],
+        ['CAPITALISATION', stock.cap !== '—' ? stock.cap + ' MAD' : '—'],
+        ['DIVIDENDE',     stock.div > 0 ? stock.div + ' MAD (' + stock.divYield.toFixed(2) + '%)' : '—'],
+        ['FRÉQUENCE',     stock.divFreq],
+        ['PROCHAIN DIV',  stock.divDate],
+      ].map(([l, v]) => `<div class="modal-stat"><div class="modal-stat-label">${l}</div><div class="modal-stat-val">${v}</div></div>`).join('');
+    }
+    el('stock-modal')?.classList.add('open');
+  }
+
+  /** Creates a portfolio holding card showing position + P&L */
+  static createPortfolioCard(holding, stock, index = 0) {
+    if (!stock) return '';
+    const currentValue = stock.price * holding.qty;
+    const costBasis    = holding.avgPrice * holding.qty;
+    const pnl          = currentValue - costBasis;
+    const pnlPct       = (pnl / costBasis) * 100;
+    const up           = pnl >= 0;
+    const trend        = up ? 'up' : 'down';
+
+    return `
+      <div class="port-card animate-stagger" data-ticker="${stock.ticker}" role="button" tabindex="0" style="animation-delay: ${index * 0.04}s">
+        <div class="port-card-left">
+          ${stock.getLogoHTML(40)}
+          <div class="port-card-info">
+            <div class="port-card-ticker">${stock.ticker}</div>
+            <div class="port-card-name">${stock.name}</div>
+            <div class="port-card-meta">
+              <span>${holding.qty} titres</span>
+              <span>·</span>
+              <span>Moy. ${holding.avgPrice.toLocaleString('fr-FR')} MAD</span>
+            </div>
+          </div>
+        </div>
+        <div class="port-card-right">
+          <div class="port-card-value">${currentValue.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</div>
+          <div class="port-card-pnl ${trend}">
+            <span class="arrow-icon" aria-hidden="true">${up ? '▲' : '▼'}</span>
+            ${Math.abs(pnlPct).toFixed(2)}%
+            <span class="port-card-pnl-abs">(${up ? '+' : ''}${pnl.toLocaleString('fr-FR', { minimumFractionDigits: 2 })})</span>
+          </div>
+          <div class="port-card-qty">${stock.price.toLocaleString('fr-FR')} MAD/titre</div>
+        </div>
+        <button class="port-remove-btn" data-remove-pos="${stock.ticker}" aria-label="Retirer ${stock.ticker} du portefeuille">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>`;
+  }
+
+  /** Creates dividend list card HTML */
+  static createDivCard(stock, index = 0) {
+    return `
+      <div class="div-card animate-stagger" data-ticker="${stock.ticker}" role="button" tabindex="0" style="animation-delay: ${index * 0.04}s">
+        ${stock.getLogoHTML(38)}
+        <div class="div-info">
+          <div class="div-name">${stock.name}</div>
+          <div class="div-meta">
+            <span>${stock.ticker}</span>
+            <span>${stock.getSectorLabel()}</span>
+            <span>${stock.price.toLocaleString('fr-FR')} MAD</span>
+          </div>
+          <div class="div-date-badge">📅 ${stock.divDate}</div>
+        </div>
+        <div class="div-right">
+          <div class="div-yield-big">${stock.divYield.toFixed(2)}%</div>
+          <div class="div-amount">${stock.div} MAD/action</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;">${stock.divFreq}</div>
+        </div>
+      </div>`;
+  }
+
+  /** Creates a favourites card HTML */
+  static createFavCard(stock, index = 0) {
+    const up = stock.getTrend() === 'up';
+    return `
+      <div class="fav-card animate-stagger" style="animation-delay: ${index * 0.04}s">
+        <div class="fav-card-glow ${up ? 'glow-green' : 'glow-red'}"></div>
+        <div class="fav-card-inner" data-ticker="${stock.ticker}" role="button" tabindex="0">
+          ${stock.getLogoHTML(38)}
+          <div class="fav-card-info">
+            <div class="fav-card-name">${stock.name}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
+              <span class="fav-ticker-badge">${stock.ticker}</span>
+              <span style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;">${stock.getSectorLabel()}</span>
+            </div>
+            ${stock.divYield > 0 ? `<div style="font-size:10px;color:#f5c842;font-family:'JetBrains Mono',monospace;margin-top:4px;">Rdt ${stock.divYield.toFixed(2)}%</div>` : ''}
+          </div>
+          <div style="text-align:right;">
+            <div class="fav-price">${stock.price > 0 ? stock.price.toLocaleString('fr-FR') + ' MAD' : '—'}</div>
+            <div class="fav-change ${up ? 'up' : 'down'}">
+              <span class="arrow-icon" aria-hidden="true">${stock.change !== 0 ? (up ? '▲' : '▼') : ''}</span>
+              ${stock.change !== 0 ? Math.abs(stock.change).toFixed(2) + '%' : '—'}
+            </div>
+            <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;">YTD ${stock.ytd > 0 ? '+' : ''}${stock.ytd}%</div>
+          </div>
+          <div class="fav-remove-btn" data-remove="${stock.ticker}" role="button" aria-label="Retirer ${stock.ticker} des favoris">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  /** Creates a quick-reference card HTML */
+  static createQrCard(stock, index = 0) {
+    const up   = stock.getTrend() === 'up';
+    const susp = stock.isSuspended();
+    return `
+      <div class="qr-card animate-stagger" data-ticker="${stock.ticker}" data-price="${stock.price}" role="button" tabindex="0" style="animation-delay: ${index * 0.04}s">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          ${stock.getLogoHTML(28)}
+          <div style="min-width:0;">
+            <div class="qr-ticker">${stock.ticker}</div>
+            <div class="qr-name">${stock.name}</div>
+          </div>
+        </div>
+        <div class="qr-price">${susp ? '—' : stock.price.toLocaleString('fr-FR') + ' MAD'}</div>
+        <div class="qr-change ${up ? 'up' : 'down'}">
+          <span aria-hidden="true">${susp ? '' : (up ? '▲' : '▼')}</span>
+          ${susp ? 'Suspendu' : Math.abs(stock.change).toFixed(2) + '%'}
+        </div>
+        <button class="qr-use-btn" data-calc="${stock.ticker}" data-price="${stock.price}">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg> Calculer
+        </button>
+      </div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  WAMY — App.js  (Central Controller / Entry Point)
+//  Manages application state, routing, and event wiring
+// ════════════════════════════════════════════════════════
+
+
+
+
+class WamyApp {
+  constructor() {
+    // ── State ────────────────────────────────────────────
+    this.stocks      = RAW_STOCKS.map(d => new Stock(d));
+    this.watchlist   = new Set();
+    this.filters     = { sector: 'all', tab: 'top', query: '' };
+    this._portfolio       = [...MOCK_PORTFOLIO];   // user positions (synced to localStorage)
+    this._addStockTicker  = null;                  // selected ticker in add-stock modal
+
+    this.currentPage  = 'marche';
+    this.isAnimating  = false;
+    this.isLight      = false;
+    this.brokerFeeRate = 0.006;
+    this.divSortKey   = 'yield';
+    this.yieldAsc     = false;
+
+    this._searchTimer = null;   // debounce handle
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  INIT
+  // ══════════════════════════════════════════════════════
+  init() {
+    this._loadTheme();
+    this._loadWatchlist();
+    this._attachEventListeners();
+    this._setupSwipe();
+    this._registerServiceWorker();
+    this._checkAuth();
+  }
+
+  _startApp() {
+    this._loadPortfolio();
+    this._renderMasiCard();
+    this._applyFilter();
+    this._renderWatchlist();
+    this._renderDivList();
+    this._renderQuickRef();
+    this._searchStocks();
+    this._updateMarketTimer();
+    setInterval(() => this._updateMarketTimer(), 30000);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  MASI INDEX CARD
+  // ══════════════════════════════════════════════════════
+  _renderMasiCard() {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const d = MASI_DATA;
+    const up = d.change >= 0;
+
+    // Main value
+    set('masi-value', d.value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }));
+
+    // Change badge
+    const chEl = document.getElementById('masi-change');
+    if (chEl) {
+      chEl.className = up ? 'change-pos' : 'change-neg';
+      const arrow = up ? '▲' : '▼';
+      chEl.innerHTML = `<span class="arrow-icon">${arrow}</span> ${Math.abs(d.change).toFixed(2)}%  (${up ? '+' : ''}${d.points.toFixed(2)} pts)`;
+    }
+
+    // Meta: YTD
+    set('masi-meta', `YTD ${d.ytd > 0 ? '+' : ''}${d.ytd}%`);
+
+    // Mini chart gradient color based on direction
+    const chartPath = document.querySelector('.mini-chart path[stroke]');
+    const chartFill = document.querySelector('.mini-chart path[fill^="url"]');
+    const grad0     = document.querySelector('#chartGrad stop:first-child');
+    const grad1     = document.querySelector('#chartGrad stop:last-child');
+    const color     = up ? '#34d378' : '#f43f5e';
+    if (chartPath) chartPath.setAttribute('stroke', color);
+    if (grad0)  grad0.setAttribute('stop-color', color);
+    if (grad1)  grad1.setAttribute('stop-color', color);
+
+    // Market summary row
+    set('mkt-cap', d.cap + ' MAD');
+    set('mkt-vol', d.vol + ' MAD');
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  AUTH / SESSION
+  // ══════════════════════════════════════════════════════
+  _checkAuth() {
+    const user = localStorage.getItem('wamy_user');
+    if (!user) {
+      this._showLoginScreen();
+    } else {
+      this._hideLoginScreen();
+      this._startApp();
+    }
+  }
+
+  _showLoginScreen() {
+    const screen = document.getElementById('login-screen');
+    if (screen) screen.classList.add('visible');
+  }
+
+  _hideLoginScreen() {
+    const screen = document.getElementById('login-screen');
+    if (!screen) return;
+    screen.classList.add('hiding');
+    setTimeout(() => { screen.classList.remove('visible', 'hiding'); }, 600);
+  }
+
+  _loginAs(user) {
+    try { localStorage.setItem('wamy_user', JSON.stringify(user)); } catch(e) {}
+    this._hideLoginScreen();
+    this._startApp();
+    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Bienvenue ${user.name} !`);
+  }
+
+  _logout() {
+    try { localStorage.removeItem('wamy_user'); } catch(e) {}
+    this._showLoginScreen();
+    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Déconnexion réussie`);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  SERVICE WORKER (PWA)
+  // ══════════════════════════════════════════════════════
+  _registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .catch(err => console.warn('SW registration failed:', err));
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  CENTRALISED EVENT DELEGATION
+  // ══════════════════════════════════════════════════════
+  _attachEventListeners() {
+    // ── Global click delegation ──
+    document.addEventListener('click', e => {
+      const t = e.target;
+
+      // Login screen buttons
+      if (t.id === 'btn-login-email' || t.closest('#btn-login-email')) {
+        const emailInput = document.getElementById('login-email');
+        const passInput  = document.getElementById('login-pass');
+        const email = emailInput ? emailInput.value.trim() : '';
+        if (!email || !email.includes('@')) {
+          UIController.showToast('Veuillez entrer une adresse e-mail valide');
+          return;
+        }
+        if (passInput && passInput.value.length < 4) {
+          UIController.showToast('Le mot de passe est trop court');
+          return;
+        }
+        // Mock user creation from email Prefix
+        const prefix = email.split('@')[0];
+        const name   = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        this._loginAs({ name: name, email: email, avatar: name.charAt(0) }); 
+        return;
+      }
+      if (t.id === 'btn-login-google' || t.closest('#btn-login-google')) {
+        this._loginAs(MOCK_USER); return;
+      }
+      if (t.id === 'btn-login-demo' || t.closest('#btn-login-demo')) {
+        this._loginAs({ name: 'Visiteur', email: '', avatar: 'V' }); return;
+      }
+
+      // Logout button
+      if (t.id === 'btn-logout' || t.closest('#btn-logout')) {
+        this._logout(); return;
+      }
+
+      // Bottom nav
+      const navItem = t.closest('.nav-item');
+      if (navItem) { this._showPage(navItem.dataset.page || navItem.id.replace('nav-', '')); return; }
+
+      // Header search icon
+      if (t.closest('#btn-header-search')) { this._showPage('search'); return; }
+
+      // Theme toggle
+      if (t.closest('.theme-toggle')) { this._toggleTheme(); return; }
+
+      // Nav tabs (top/hausses/baisses…)
+      const tab = t.closest('.tab');
+      if (tab) { this._setTab(tab, tab.dataset.tab); return; }
+
+      // Sector filter chips
+      const chip = t.closest('.filter-chip');
+      if (chip) { this._filterStocks(chip.dataset.sector, chip); return; }
+
+      // Star (watchlist) button — on stock cards
+      const star = t.closest('[data-star]');
+      if (star) { e.stopPropagation(); this._toggleStar(star.dataset.star); return; }
+
+      // Remove from favourites
+      const rem = t.closest('[data-remove]');
+      if (rem) { e.stopPropagation(); this._removeFav(rem.dataset.remove); return; }
+
+      // Open stock modal — stock row
+      const row = t.closest('.stock-row[data-ticker]');
+      if (row && !t.closest('[data-star]')) { UIController.showStockModal(this._findStock(row.dataset.ticker)); return; }
+
+      // Dividend list rows
+      const divCard = t.closest('.div-card[data-ticker]');
+      if (divCard) { UIController.showStockModal(this._findStock(divCard.dataset.ticker)); return; }
+
+      // Favourites inner card
+      const favInner = t.closest('.fav-card-inner[data-ticker]');
+      if (favInner && !t.closest('[data-remove]')) { UIController.showStockModal(this._findStock(favInner.dataset.ticker)); return; }
+
+      // Modal close — stock detail modal
+      if (t.id === 'stock-modal') { t.classList.remove('open'); return; }
+      if (t.id === 'btn-modal-close' || (t.closest('.modal-close') && !t.closest('#add-stock-modal'))) {
+        document.getElementById('stock-modal')?.classList.remove('open'); return;
+      }
+
+      // Add-stock modal — open
+      if (t.closest('#btn-add-stock')) { this._openAddStockModal(); return; }
+      // Add-stock modal — close
+      if (t.id === 'btn-add-stock-close' || t.closest('#btn-add-stock-close')) { this._closeAddStockModal(); return; }
+      if (t.id === 'add-stock-modal' && !t.closest('.add-stock-modal-body')) { this._closeAddStockModal(); return; }
+      // Add-stock — clear selected
+      if (t.id === 'add-stock-clear' || t.closest('#add-stock-clear')) { this._clearAddStockSelection(); return; }
+      // Add-stock — select from results
+      const asResult = t.closest('.add-stock-result-item');
+      if (asResult) { this._selectAddStock(asResult.dataset.ticker); return; }
+      // Add-stock — confirm
+      if (t.id === 'btn-add-stock-confirm' || t.closest('#btn-add-stock-confirm')) { this._confirmAddStock(); return; }
+      // Remove position card
+      const remPos = t.closest('[data-remove-pos]');
+      if (remPos) { e.stopPropagation(); this._removePosition(remPos.dataset.removePos); return; }
+
+      // Quick-ref card & Calculer button
+      const qrCalcBtn = t.closest('[data-calc]');
+      if (qrCalcBtn) { e.stopPropagation(); this._prefillCalc(Number(qrCalcBtn.dataset.price), qrCalcBtn.dataset.calc); return; }
+
+      const qrCard = t.closest('.qr-card[data-ticker]');
+      if (qrCard && !t.closest('[data-calc]')) { this._prefillCalc(Number(qrCard.dataset.price), qrCard.dataset.ticker); return; }
+
+      // Broker fee buttons
+      const brokerBtn = t.closest('.broker-btn');
+      if (brokerBtn) { this._setBrokerFee(parseFloat(brokerBtn.dataset.fee || brokerBtn.textContent), brokerBtn); return; }
+
+      // Dividend sort buttons
+      const divSortBtn = t.closest('.div-sort-btn');
+      if (divSortBtn) {
+        if (divSortBtn.id === 'btn-yield') { this._toggleYieldSort(divSortBtn); }
+        else { this._sortDiv(divSortBtn.dataset.key, divSortBtn); }
+        return;
+      }
+
+      // Clear QR search
+      if (t.closest('#qr-clear')) { const i = document.getElementById('qr-search'); if(i) i.value=''; this._renderQuickRef(); return; }
+
+      // Clear div search
+      if (t.closest('#div-clear')) {
+        const i = document.getElementById('div-search');
+        if (i) i.value = '';
+        this._renderDivList();
+        return;
+      }
+    });
+
+    // ── Input event delegation (debounced search) ──
+    document.addEventListener('input', e => {
+      const id = e.target.id;
+      if (id === 'search-input') {
+        clearTimeout(this._searchTimer);
+        this._searchTimer = setTimeout(() => this._searchStocks(), 300);
+      }
+      if (id === 'qr-search')   this._renderQuickRef();
+      if (id === 'div-search')  this._renderDivList();
+      if (id === 'calc-price' || id === 'calc-qty') this._calculateCost();
+      if (id === 'broker-fee-custom') this._setBrokerFeeCustom(e.target);
+      // Add-stock modal inputs
+      if (id === 'add-stock-search') this._searchAddStock(e.target.value);
+      if (id === 'add-stock-qty' || id === 'add-stock-price') this._updateAddStockPreview();
+    });
+
+    // Keyboard accessibility — trigger click on Enter/Space for interactive elements
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const el = e.target;
+        if (el.matches('[role="button"]')) { e.preventDefault(); el.click(); }
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  PAGE ROUTING
+  // ══════════════════════════════════════════════════════
+  _showPage(page, forceDir) {
+    if (!PAGES.includes(page) || page === this.currentPage || this.isAnimating) return;
+    this.isAnimating = true;
+
+    const prevIdx  = PAGES.indexOf(this.currentPage);
+    const nextIdx  = PAGES.indexOf(page);
+    const dir      = forceDir || (nextIdx > prevIdx ? 'left' : 'right');
+    const incoming = document.getElementById('page-' + page);
+    const outgoing = document.getElementById('page-' + this.currentPage);
+
+    // Pre-render page content
+    if (page === 'outils')     this._renderQuickRef();
+    if (page === 'search')     this._searchStocks();
+    if (page === 'dividendes') this._renderDivList();
+    if (page === 'portfolio')  this._renderPortfolio();
+    if (page === 'favoris')    this._renderWatchlist();
+
+    const navTabs = document.getElementById('nav-tabs');
+    if (navTabs) navTabs.style.display = page === 'marche' ? 'flex' : 'none';
+
+    if (incoming) {
+      incoming.style.transition = 'none';
+      incoming.style.transform  = dir === 'left' ? 'translateX(100%)' : 'translateX(-100%)';
+      incoming.style.display    = 'flex';
+      incoming.style.opacity    = '0.6';
+    }
+    incoming?.getBoundingClientRect(); // force reflow
+
+    const DUR = '300ms', EASE = 'cubic-bezier(0.25,0.46,0.45,0.94)';
+    if (outgoing) { outgoing.style.transition = `transform ${DUR} ${EASE},opacity ${DUR} ${EASE}`; outgoing.style.transform = dir === 'left' ? 'translateX(-30%)' : 'translateX(30%)'; outgoing.style.opacity = '0'; }
+    if (incoming) { incoming.style.transition = `transform ${DUR} ${EASE},opacity ${DUR} ${EASE}`; incoming.style.transform = 'translateX(0)'; incoming.style.opacity = '1'; }
+
+    setTimeout(() => {
+      if (outgoing) { outgoing.style.cssText = ''; outgoing.classList.remove('active'); }
+      if (incoming) { incoming.style.cssText = ''; incoming.classList.add('active'); }
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('nav-' + page)?.classList.add('active');
+      this.currentPage  = page;
+      this.isAnimating  = false;
+      if (page === 'search') setTimeout(() => document.getElementById('search-input')?.focus(), 100);
+    }, 310);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  FILTERS & TABS
+  // ══════════════════════════════════════════════════════
+  _filterStocks(sector, el) {
+    this.filters.sector = sector;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    this._applyFilter();
+  }
+
+  _setTab(el, tab) {
+    this.filters.tab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    this._applyFilter();
+  }
+
+  _applyFilter() {
+    let stocks = [...this.stocks];
+    if (this.filters.sector !== 'all') stocks = stocks.filter(s => s.sector === this.filters.sector);
+
+    const tab = this.filters.tab;
+    if      (tab === 'hausses')   stocks = stocks.filter(s => s.change > 0).sort((a,b) => b.change - a.change);
+    else if (tab === 'baisses')   stocks = stocks.filter(s => s.change < 0).sort((a,b) => a.change - b.change);
+    else if (tab === 'tendances') stocks = [...stocks].sort((a,b) => (parseFloat(b.vol) || 0) - (parseFloat(a.vol) || 0));
+    else if (tab === 'rendement') stocks = [...stocks].sort((a,b) => b.ytd - a.ytd);
+
+    UIController.renderList('stock-table', stocks, this.watchlist);
+
+    const hausses = this.stocks.filter(s => s.change > 0).length;
+    const baisses = this.stocks.filter(s => s.change < 0).length;
+    const stables = this.stocks.filter(s => s.change === 0).length;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('stat-hausses', hausses);
+    set('stat-baisses', baisses);
+    set('stat-stables', stables);
+    set('stock-count', stocks.length + ' actions');
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  SEARCH (debounced in _attachEventListeners)
+  // ══════════════════════════════════════════════════════
+  _searchStocks() {
+    const q = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+    const pool = q
+      ? this.stocks.filter(s =>
+          s.name.toLowerCase().includes(q) ||
+          s.ticker.toLowerCase().includes(q) ||
+          s.getSectorLabel().toLowerCase().includes(q))
+      : this.stocks;
+    UIController.renderList('search-results', pool, this.watchlist);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  WATCHLIST
+  // ══════════════════════════════════════════════════════
+  _toggleStar(ticker) {
+    const adding = !this.watchlist.has(ticker);
+    if (adding) { this.watchlist.add(ticker);    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;margin-bottom:2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Ajouté — ${ticker}`); }
+    else        { this.watchlist.delete(ticker); UIController.showToast(`Retiré — ${ticker}`); }
+    this._saveWatchlist();
+    this._applyFilter();
+    if (this.currentPage === 'favoris') this._renderWatchlist();
+  }
+
+  _removeFav(ticker) {
+    this.watchlist.delete(ticker);
+    UIController.showToast('Retiré — ' + ticker);
+    this._saveWatchlist();
+    this._applyFilter();
+    this._renderWatchlist();
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  ADD STOCK MODAL
+  // ══════════════════════════════════════════════════════
+  _openAddStockModal() {
+    this._addStockTicker = null;
+    // Reset modal state
+    const el = id => document.getElementById(id);
+    if (el('add-stock-search'))   el('add-stock-search').value = '';
+    if (el('add-stock-qty'))      el('add-stock-qty').value = '';
+    if (el('add-stock-price'))    el('add-stock-price').value = '';
+    if (el('add-stock-results'))  el('add-stock-results').innerHTML = '';
+    if (el('add-stock-selected')) el('add-stock-selected').style.display = 'none';
+    if (el('add-stock-preview'))  el('add-stock-preview').style.display = 'none';
+    if (el('btn-add-stock-confirm')) el('btn-add-stock-confirm').disabled = true;
+    el('add-stock-modal')?.classList.add('open');
+    setTimeout(() => el('add-stock-search')?.focus(), 300);
+  }
+
+  _closeAddStockModal() {
+    document.getElementById('add-stock-modal')?.classList.remove('open');
+  }
+
+  _searchAddStock(q) {
+    const results = document.getElementById('add-stock-results');
+    if (!results) return;
+    q = (q || '').toLowerCase().trim();
+    if (!q) { results.innerHTML = ''; return; }
+    const matches = this.stocks.filter(s =>
+      s.ticker.toLowerCase().includes(q) ||
+      s.name.toLowerCase().includes(q) ||
+      s.getSectorLabel().toLowerCase().includes(q)
+    ).slice(0, 6);
+    if (!matches.length) {
+      results.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">Aucune action trouvée</div>`;
+      return;
+    }
+    results.innerHTML = matches.map(s => `
+      <div class="add-stock-result-item" data-ticker="${s.ticker}" role="button" tabindex="0">
+        ${s.getLogoHTML(32)}
+        <div class="add-stock-result-info">
+          <div class="add-stock-result-ticker">${s.ticker}</div>
+          <div class="add-stock-result-name">${s.name}</div>
+        </div>
+        <div class="add-stock-result-price">${s.price > 0 ? s.price.toLocaleString('fr-FR') + ' MAD' : '—'}</div>
+      </div>`).join('');
+  }
+
+  _selectAddStock(ticker) {
+    const stock = this._findStock(ticker);
+    if (!stock) return;
+    this._addStockTicker = ticker;
+    // Autofill current price as suggestion
+    const priceInput = document.getElementById('add-stock-price');
+    if (priceInput && !priceInput.value) priceInput.value = stock.price;
+    // Show selected badge, hide search
+    const selEl  = document.getElementById('add-stock-selected');
+    const selIn  = document.getElementById('add-stock-selected-inner');
+    const resEl  = document.getElementById('add-stock-results');
+    const srch   = document.getElementById('add-stock-search');
+    if (selEl)  selEl.style.display = 'flex';
+    if (selIn)  selIn.innerHTML = `${stock.getLogoHTML(32)}<div style="min-width:0"><div style="font-weight:800;font-family:'JetBrains Mono',monospace;font-size:13px">${stock.ticker}</div><div style="font-size:11px;color:var(--text3)">${stock.name}</div></div><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">${stock.price > 0 ? stock.price.toLocaleString('fr-FR') + ' MAD' : '—'}</span>`;
+    if (resEl)  resEl.innerHTML = '';
+    if (srch)   srch.value = '';
+    this._updateAddStockPreview();
+  }
+
+  _clearAddStockSelection() {
+    this._addStockTicker = null;
+    const selEl = document.getElementById('add-stock-selected');
+    const btn   = document.getElementById('btn-add-stock-confirm');
+    const prev  = document.getElementById('add-stock-preview');
+    if (selEl) selEl.style.display = 'none';
+    if (prev)  prev.style.display = 'none';
+    if (btn)   btn.disabled = true;
+    document.getElementById('add-stock-search')?.focus();
+  }
+
+  _updateAddStockPreview() {
+    if (!this._addStockTicker) return;
+    const stock  = this._findStock(this._addStockTicker);
+    const qty    = parseFloat(document.getElementById('add-stock-qty')?.value);
+    const price  = parseFloat(document.getElementById('add-stock-price')?.value);
+    const btn    = document.getElementById('btn-add-stock-confirm');
+    const prev   = document.getElementById('add-stock-preview');
+    if (!stock || !qty || !price || qty <= 0 || price <= 0) {
+      if (btn)  btn.disabled = true;
+      if (prev) prev.style.display = 'none';
+      return;
+    }
+    const total   = qty * price;
+    const current = qty * stock.price;
+    const pnl     = current - total;
+    const pnlUp   = pnl >= 0;
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('add-preview-total',   total.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD');
+    set('add-preview-current', current.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD');
+    const pnlEl = document.getElementById('add-preview-pnl');
+    if (pnlEl) {
+      pnlEl.textContent = (pnlUp ? '+' : '') + pnl.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD';
+      pnlEl.style.color = pnlUp ? 'var(--green)' : 'var(--red)';
+    }
+    if (prev) prev.style.display = 'block';
+    if (btn)  btn.disabled = false;
+  }
+
+  _confirmAddStock() {
+    const ticker = this._addStockTicker;
+    const qty    = parseFloat(document.getElementById('add-stock-qty')?.value);
+    const price  = parseFloat(document.getElementById('add-stock-price')?.value);
+    if (!ticker || !qty || !price || qty <= 0 || price <= 0) return;
+    // Merge with existing or add new
+    const existing = this._portfolio.find(h => h.ticker === ticker);
+    if (existing) {
+      // Weighted average price
+      const totalQty   = existing.qty + qty;
+      const avgPrice   = ((existing.avgPrice * existing.qty) + (price * qty)) / totalQty;
+      existing.qty     = totalQty;
+      existing.avgPrice = Math.round(avgPrice * 100) / 100;
+    } else {
+      this._portfolio.push({ ticker, qty, avgPrice: price });
+    }
+    this._savePortfolio();
+    this._closeAddStockModal();
+    this._renderPortfolio();
+    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><polyline points="20 6 9 17 4 12"/></svg> ${ticker} ajouté au portefeuille !`);
+  }
+
+  _removePosition(ticker) {
+    this._portfolio = this._portfolio.filter(h => h.ticker !== ticker);
+    this._savePortfolio();
+    this._renderPortfolio();
+    UIController.showToast('Retiré — ' + ticker);
+  }
+
+  _savePortfolio() {
+    try { localStorage.setItem('wamy_portfolio', JSON.stringify(this._portfolio)); } catch(e) {}
+  }
+  _loadPortfolio() {
+    try {
+      const saved = localStorage.getItem('wamy_portfolio');
+      if (saved) this._portfolio = JSON.parse(saved);
+    } catch(e) {}
+  }
+
+  _renderPortfolio() {
+    const container = document.getElementById('portfolio-list');
+    if (!container) return;
+
+    // Load user from localStorage
+    let userData = MOCK_USER;
+    try {
+      const saved = localStorage.getItem('wamy_user');
+      if (saved) userData = { ...MOCK_USER, ...JSON.parse(saved) };
+    } catch(e) {}
+
+    // Populate user card
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('port-avatar',     userData.avatar || userData.name?.charAt(0) || 'A');
+    set('port-user-name',  userData.name || 'Utilisateur');
+    set('port-user-email', userData.email || 'Compte simulé');
+
+    // Calculate totals from this._portfolio
+    let totalValue = 0, totalCost = 0;
+    this._portfolio.forEach(h => {
+      const stock = this._findStock(h.ticker);
+      if (stock) {
+        totalValue += stock.price * h.qty;
+        totalCost  += h.avgPrice * h.qty;
+      }
+    });
+    const totalPnl    = totalValue - totalCost;
+    const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
+    const pnlUp       = totalPnl >= 0;
+
+    set('port-balance', totalValue.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD');
+
+    const pnlEl = document.getElementById('port-pnl');
+    if (pnlEl) {
+      pnlEl.textContent = (pnlUp ? '+' : '') + totalPnlPct.toFixed(2) + '%';
+      pnlEl.className = 'port-pnl-badge ' + (pnlUp ? 'up' : 'down');
+    }
+    set('port-pnl-amount', (pnlUp ? '+' : '') + totalPnl.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD total');
+    set('port-count', this._portfolio.length + ' titres');
+
+    // Progress bar
+    const barEl = document.getElementById('port-bar-fill');
+    if (barEl) barEl.style.width = Math.min(100, Math.max(0, 50 + totalPnlPct * 5)) + '%';
+
+    // Render holdings list (with remove button on each card)
+    if (!this._portfolio.length) {
+      container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <br>
+        Aucune position · Cliquez sur <strong style="color:var(--gold);">+ Ajouter</strong> pour commencer
+      </div>`;
+      return;
+    }
+    container.innerHTML = this._portfolio.map(h =>
+      UIController.createPortfolioCard(h, this._findStock(h.ticker))
+    ).join('');
+  }
+
+  _renderWatchlist() {
+    const container = document.getElementById('watchlist-container');
+    const countEl   = document.getElementById('fav-count');
+    if (!container) return;
+    if (countEl) countEl.textContent = this.watchlist.size;
+    const favs = this.stocks.filter(s => this.watchlist.has(s.ticker));
+    if (!favs.length) {
+      container.innerHTML = `<div class="fav-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div class="fav-empty-text">Aucun favori pour l'instant</div>
+        <div class="fav-empty-sub">Appuyez sur l'étoile au coin d'une action</div>
+      </div>`;
+      return;
+    }
+    container.innerHTML = favs.map(s => UIController.createFavCard(s)).join('');
+  }
+
+  _saveWatchlist() {
+    try { localStorage.setItem('wamy_watchlist', JSON.stringify([...this.watchlist])); } catch(e){}
+  }
+  _loadWatchlist() {
+    try {
+      const saved = localStorage.getItem('wamy_watchlist');
+      if (saved) this.watchlist = new Set(JSON.parse(saved));
+    } catch(e){}
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  DIVIDENDS
+  // ══════════════════════════════════════════════════════
+  _renderDivList() {
+    const container = document.getElementById('div-list');
+    if (!container) return;
+    const q = (document.getElementById('div-search')?.value || '').toLowerCase().trim();
+    let stocks = q
+      ? this.stocks.filter(s => s.name.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q) || s.getSectorLabel().toLowerCase().includes(q))
+      : [...this.stocks];
+    stocks = stocks.filter(s => s.divYield > 0);
+
+    if (this.divSortKey === 'yield') stocks.sort((a,b) => this.yieldAsc ? a.divYield - b.divYield : b.divYield - a.divYield);
+    else if (this.divSortKey === 'div')   stocks.sort((a,b) => b.div - a.div);
+    else if (this.divSortKey === 'price') stocks.sort((a,b) => b.price - a.price);
+    else if (this.divSortKey === 'name')  stocks.sort((a,b) => a.name.localeCompare(b.name));
+
+    const sorted  = [...this.stocks].filter(s => s.divYield > 0).sort((a,b) => b.divYield - a.divYield);
+    const highest = sorted[0], lowest = sorted[sorted.length - 1];
+    const avg     = sorted.reduce((a,s) => a + s.divYield, 0) / sorted.length;
+    const set     = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('div-highest',      highest.divYield.toFixed(2) + '%');
+    set('div-highest-name', highest.ticker);
+    set('div-lowest',       lowest.divYield.toFixed(2)  + '%');
+    set('div-lowest-name',  lowest.ticker);
+    set('div-avg',          avg.toFixed(2) + '%');
+
+    container.innerHTML = stocks.map(s => UIController.createDivCard(s)).join('');
+  }
+
+  _toggleYieldSort(el) {
+    this.yieldAsc = !this.yieldAsc;
+    this.divSortKey = 'yield';
+    document.querySelectorAll('.div-sort-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    el.textContent = this.yieldAsc ? 'Rendement ↑' : 'Rendement ↓';
+    this._renderDivList();
+  }
+
+  _sortDiv(key, el) {
+    this.divSortKey = key;
+    document.querySelectorAll('.div-sort-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    const btn = document.getElementById('btn-yield');
+    if (btn) btn.textContent = 'Rendement ↓';
+    this._renderDivList();
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  QUICK REFERENCE (Outils tab)
+  // ══════════════════════════════════════════════════════
+  _renderQuickRef() {
+    const container = document.getElementById('quick-ref');
+    const countEl   = document.getElementById('qr-count');
+    const q = (document.getElementById('qr-search')?.value || '').toLowerCase().trim();
+    document.getElementById('qr-clear')?.classList.toggle('show', q.length > 0);
+    let stocks = q
+      ? this.stocks.filter(s => s.name.toLowerCase().includes(q) || s.ticker.toLowerCase().includes(q) || s.getSectorLabel().toLowerCase().includes(q))
+      : this.stocks;
+    if (countEl) countEl.textContent = stocks.length + ' actions';
+    if (!container) return;
+    if (!stocks.length) {
+      container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">Aucune action trouvée</div>`;
+      return;
+    }
+    container.innerHTML = stocks.map(s => UIController.createQrCard(s)).join('');
+  }
+
+  _prefillCalc(price, ticker) {
+    const inp   = document.getElementById('calc-price');
+    const badge = document.getElementById('calc-selected-badge');
+    if (inp) { inp.value = price; this._calculateCost(); }
+    if (badge) {
+      badge.style.display = 'flex';
+      badge.innerHTML = `<strong style="color:var(--green);">${ticker}</strong><span style="color:var(--text3);">→</span>${Number(price).toLocaleString('fr-FR')} MAD`;
+    }
+    document.querySelectorAll('.qr-card').forEach(c => c.classList.remove('selected'));
+    document.querySelector(`.qr-card[data-ticker="${ticker}"]`)?.classList.add('selected');
+    inp?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  CALCULATOR
+  // ══════════════════════════════════════════════════════
+  _setBrokerFee(rate, el) {
+    this.brokerFeeRate = rate / 100;
+    document.querySelectorAll('.broker-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.getElementById('broker-fee-custom').value = '';
+    const lbl = document.getElementById('fee-label');
+    if (lbl) lbl.textContent = rate + '%';
+    this._calculateCost();
+  }
+
+  _setBrokerFeeCustom(inp) {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v) && v >= 0 && v <= 5) {
+      this.brokerFeeRate = v / 100;
+      document.querySelectorAll('.broker-btn').forEach(b => b.classList.remove('active'));
+      const lbl = document.getElementById('fee-label');
+      if (lbl) lbl.textContent = v + '%';
+      this._calculateCost();
+    }
+  }
+
+  _calculateCost() {
+    const p       = parseFloat(document.getElementById('calc-price')?.value);
+    const q       = parseInt(document.getElementById('calc-qty')?.value);
+    const content = document.getElementById('result-content');
+    const empty   = document.getElementById('result-empty');
+    if (!p || !q || isNaN(p) || isNaN(q) || p <= 0 || q <= 0) {
+      content?.classList.remove('show'); empty?.classList.remove('hide'); return;
+    }
+    const sub       = p * q;
+    const courtier  = sub * this.brokerFeeRate;
+    const tva       = courtier * 0.10;
+    const bourse    = sub * 0.001;
+    const total     = sub + courtier + tva + bourse;
+    const totalFees = courtier + tva + bourse;
+    const feesPct   = (this.brokerFeeRate * 100).toFixed(2);
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('res-subtotal', sub.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD');
+    set('res-fees',    '+' + totalFees.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD');
+    set('res-unit',    p.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD');
+    set('res-total',   total.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD');
+    const fl = document.getElementById('fees-label-result');
+    if (fl) fl.textContent = `Frais (${feesPct}% + TVA + Bourse)`;
+    content?.classList.add('show'); empty?.classList.add('hide');
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  THEME
+  // ══════════════════════════════════════════════════════
+  _toggleTheme() {
+    this.isLight = !this.isLight;
+    UIController.toggleTheme(this.isLight);
+    try { localStorage.setItem('wamy_theme', this.isLight ? 'light' : 'dark'); } catch(e){}
+  }
+
+  _loadTheme() {
+    try {
+      if (localStorage.getItem('wamy_theme') === 'light') {
+        this.isLight = true;
+        UIController.toggleTheme(true);
+      }
+    } catch(e){}
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  MARKET TIMER
+  // ══════════════════════════════════════════════════════
+  _updateMarketTimer() {
+    const now   = new Date();
+    const utc   = now.getTime() + now.getTimezoneOffset() * 60000;
+    const rabat = new Date(utc + 3600000);
+    const day   = rabat.getDay();
+    const h     = rabat.getHours(), m = rabat.getMinutes();
+    const total = h * 60 + m;
+    const OPEN  = 9 * 60 + 30, CLOSE = 15 * 60 + 30;
+    const isWeekday = day >= 1 && day <= 5;
+    const isOpen    = isWeekday && total >= OPEN && total < CLOSE;
+
+    let statusText, timeText;
+    if (isOpen) {
+      const rem = CLOSE - total, rh = Math.floor(rem / 60), rm = rem % 60;
+      statusText = 'OUVERT';
+      timeText   = `Ferme dans ${rh > 0 ? rh + 'h' : ''}${String(rm).padStart(2, '0')}min`;
+    } else {
+      statusText = 'FERMÉ';
+      const nextOpen = new Date(rabat);
+      nextOpen.setHours(9, 30, 0, 0);
+      if (total >= CLOSE || !isWeekday) nextOpen.setDate(nextOpen.getDate() + (day === 5 ? 3 : day === 6 ? 2 : 1));
+      const diffMs = nextOpen - rabat;
+      const diffH  = Math.floor(diffMs / 3600000), diffM = Math.floor((diffMs % 3600000) / 60000);
+      timeText = diffH < 24
+        ? `Ouvre dans ${diffH}h${String(diffM).padStart(2, '0')}min`
+        : `Ouvre ${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][nextOpen.getDay()]} 09:30`;
+    }
+    UIController.updateMarketStatus(isOpen, statusText, timeText);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  SWIPE NAVIGATION
+  // ══════════════════════════════════════════════════════
+  _setupSwipe() {
+    let sx = 0, sy = 0, dragging = false;
+    document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; dragging = false; }, { passive: true });
+    document.addEventListener('touchmove',  e => {
+      const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+      if (!dragging && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) dragging = true;
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (!dragging) return;
+      const dx = e.changedTouches[0].clientX - sx;
+      if (Math.abs(dx) > 60) {
+        const i = PAGES.indexOf(this.currentPage);
+        if (dx < 0 && i < PAGES.length - 1) this._showPage(PAGES[i + 1], 'left');
+        else if (dx > 0 && i > 0)           this._showPage(PAGES[i - 1], 'right');
+      }
+      dragging = false;
+    }, { passive: true });
+  }
+
+  // ── Helper ──
+  _findStock(ticker) {
+    return this.stocks.find(s => s.ticker === ticker);
+  }
+}
+
+// ── Bootstrap ──────────────────────────────────────────
+const app = new WamyApp();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => app.init());
+} else {
+  app.init();
+}
+
+</script>
+</body>
+</html>
