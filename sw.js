@@ -12,6 +12,7 @@ const STATIC_URLS = [
   '/js/Stock.js',
   '/js/UIController.js',
   '/js/Constants.js',
+  '/js/Utility.js',
   '/manifest.json',
   'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap',
 ];
