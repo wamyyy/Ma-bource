@@ -24,6 +24,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
     rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* ════════════════════════════════════════════
    BOURSEDATA MAROC — style.css
@@ -75,21 +76,22 @@
 
     /* ── RESET ── */
     * {
-      margin: 0;
-      padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
     }
 
-    html,
     body {
-      background: var(--bg);
+      background-color: #050705;
       color: var(--text);
-      font-family: 'Syne', sans-serif;
-      height: 100%;
-      width: 100%;
+      font-family: var(--font-main);
       overflow: hidden;
-      transition: background 0.3s;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+      font-size: 14px;
+      line-height: 1.3;
     }
 
     /* ── SHELL ── */
@@ -211,11 +213,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 16px;
+      padding: 6px 12px;
       position: relative;
       z-index: 10;
       flex-shrink: 0;
-      gap: 8px;
+      gap: 6px;
     }
 
     .header-center {
@@ -4186,6 +4188,15 @@
               <div class="tool-hub-label">Calcul de Plus-Value</div>
               <div class="tool-hub-desc">Net après frais (2%) & taxes</div>
             </button>
+            <button class="tool-hub-card active-state-check" data-tool="compare" id="btn-open-compare">
+              <div class="tool-hub-icon" style="color:var(--gold);">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 20V10M12 20V4M6 20v-6"></path>
+                </svg>
+              </div>
+              <div class="tool-hub-label">Comparateur</div>
+              <div class="tool-hub-desc">Analyse side-by-side</div>
+            </button>
           </div>
 
           <!-- ══ SECTION: COST CALCULATOR ══ -->
@@ -4606,6 +4617,11 @@
               <div class="port-bar-fill" id="port-bar-fill" style="width:65%"></div>
             </div>
             <div class="port-balance-meta">Valeur de marché · Position ouverte</div>
+            
+            <!-- Portfolio History Graph -->
+            <div style="margin-top:20px; height:80px; position:relative;">
+              <canvas id="portfolio-history-canvas"></canvas>
+            </div>
           </div>
 
           <!-- Holdings -->
@@ -4691,7 +4707,7 @@
         <line x1="12" y1="12" x2="12" y2="16" />
         <line x1="10" y1="14" x2="14" y2="14" />
       </svg>
-      <span>Compte</span>
+      <span>Portefeuille</span>
     </div>
   </nav>
 
@@ -4713,15 +4729,27 @@
         </div>
       </div>
       <div class="modal-price-big" id="modal-price"></div>
+      
+      <!-- Historical Chart Section -->
+      <div style="margin: 0 0 16px 0; padding: 0 16px; height: 180px; position: relative;">
+        <canvas id="stock-chart-canvas"></canvas>
+      </div>
+
       <div class="modal-stats" id="modal-stats"></div>
-      <button class="modal-close" id="btn-modal-close">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-          stroke-linecap="round" style="margin-right:6px">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-        Fermer
-      </button>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="modal-action-btn" id="btn-modal-alert" style="flex:1;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Alerte de Prix
+          </button>
+          <button class="modal-close" style="flex:1;margin-top:0;" id="btn-modal-close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" style="margin-right:6px">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+            Fermer
+          </button>
+        </div>
     </div>
   </div>
 
@@ -4757,19 +4785,25 @@
       </div>
 
       <!-- Live Calculation Result -->
-      <div id="pv-result-container" style="margin-top:24px; text-align:center; display:none;">
-        <div style="font-size:13px; color:var(--text3); margin-bottom:4px;">Résultat Net Final</div>
-        <div id="pv-net-result" style="font-size:28px; font-weight:800; font-family:'JetBrains Mono', monospace; color:var(--green);">0.00 MAD</div>
+      <div id="pv-result-container" style="margin-top:24px; display:none;">
+        <div style="background:var(--bg2); padding:16px; border-radius:12px; border:1px solid var(--border); text-align:center;">
+          <div style="font-size:12px; color:var(--text3); margin-bottom:4px; font-family:'Syne',sans-serif;">RESULTAT NET FINAL</div>
+          <div id="pv-net-result" style="font-size:32px; font-weight:800; font-family:'JetBrains Mono', monospace; color:var(--green);">0.00 MAD</div>
+        </div>
         
-        <div style="display:flex; justify-content:space-between; margin-top:16px; padding:12px; background:var(--bg); border:1px solid var(--border2); border-radius:8px;">
-          <div style="text-align:left;">
-            <div style="font-size:11px; color:var(--text3);">Frais de Courtage (2%)</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+          <div style="padding:12px; background:var(--bg); border:1px solid var(--border2); border-radius:10px;">
+            <div style="font-size:10px; color:var(--text3); margin-bottom:2px;">Frais (Courtage)</div>
             <div id="pv-total-fees" style="font-size:13px; font-weight:700; font-family:'JetBrains Mono', monospace;">0.00 MAD</div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:11px; color:var(--text3);">Taxe TPCVM (15%)</div>
+          <div style="padding:12px; background:var(--bg); border:1px solid var(--border2); border-radius:10px;">
+            <div style="font-size:10px; color:var(--text3); margin-bottom:2px;">Taxe TPCVM (15%)</div>
             <div id="pv-total-tax" style="font-size:13px; font-weight:700; font-family:'JetBrains Mono', monospace;">0.00 MAD</div>
           </div>
+        </div>
+
+        <div style="margin-top:12px; padding:10px; font-size:10px; color:var(--text3); font-family:'JetBrains Mono',monospace; line-height:1.4; border-top:1px dashed var(--border);">
+            ⚠️ <strong>Note CGT :</strong> L'impôt de 15% (TPCVM) est prélevé sur le profit net. Les frais de courtage sont déductibles de la base imposable au Maroc.
         </div>
       </div>
 
@@ -4825,6 +4859,25 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:6px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         Annuler
       </button>
+    </div>
+  </div>
+
+  <!-- ══════════ COMPARE MODAL ══════════ -->
+  <div class="modal-overlay" id="compare-modal">
+    <div class="modal add-stock-modal-body">
+      <div class="modal-handle"></div>
+      <div class="add-stock-header">
+        <div class="add-stock-title">Comparer deux actions</div>
+        <div class="add-stock-sub">Evolution relative (30 derniers jours)</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
+        <select class="calc-input" id="compare-s1" style="font-size:12px;"></select>
+        <select class="calc-input" id="compare-s2" style="font-size:12px;"></select>
+      </div>
+      <div style="margin-top:20px; height:220px; position:relative;">
+        <canvas id="compare-canvas"></canvas>
+      </div>
+      <button class="modal-close" style="margin-top:20px;width:100%" onclick="document.getElementById('compare-modal').classList.remove('open')">Fermer</button>
     </div>
   </div>
 
@@ -5108,7 +5161,10 @@
     //  All static data and configuration constants
     // ════════════════════════════════════════════════════════
 
+
     const PAGES = ['marche', 'search', 'outils', 'portfolio'];
+
+    const SPARKLINE_DATA = {"ATW":[13,10,12,20,22,14,16,16],"BOA":[11,17,10,18,19,29,29,20],"BCP":[15,14,24,28,17,12,18,15],"BMCI":[10,27,20,27,13,17,24,15],"CFG":[21,22,20,20,14,29,15,18],"CIH":[21,17,14,20,11,18,23,15],"CDM":[25,24,18,29,18,19,14,11],"SLF":[17,20,19,26,23,18,18,29],"AFM":[13,27,27,22,17,16,29,18],"AGM":[18,28,22,14,29,25,23,27],"ATL":[16,27,20,13,17,19,28,11],"SAH":[19,16,28,12,13,29,28,18],"WAA":[29,15,18,24,25,19,22,13],"MNG":[21,18,27,26,23,27,15,10],"CMT":[23,23,28,21,25,18,26,11],"SMI":[21,13,10,29,18,26,13,17],"SID":[27,17,28,23,22,13,10,29],"DHO":[20,14,14,27,29,26,28,20],"ZDJ":[10,29,22,29,10,28,16,29],"CMA":[11,21,14,26,28,29,25,22],"LHM":[27,16,18,17,22,16,11,21],"GTM":[18,10,20,11,23,11,23,29],"TGC":[29,25,16,22,10,11,16,19],"COL":[23,19,14,11,14,17,21,11],"AFI":[26,12,23,16,16,14,26,24],"JET":[15,10,12,16,26,16,21,17],"DLM":[11,27,25,26,28,19,25,24],"TQM":[21,10,14,23,11,18,24,25],"TMA":[10,26,10,26,27,13,12,20],"MOX":[15,27,19,15,13,11,26,23],"GAZ":[24,11,16,18,28,28,22,13],"IAM":[12,19,29,14,17,15,22,10],"HPS":[17,14,26,11,19,29,25,16],"INV":[27,22,11,11,19,14,16,27],"M2M":[17,25,23,20,23,14,23,14],"DYT":[22,20,22,19,10,18,22,26],"DWY":[17,28,18,14,23,16,18,27],"IBC":[24,20,13,15,10,29,14,10],"MIC":[24,12,13,26,11,26,28,21],"SMM":[10,16,18,29,11,20,25,21],"CAP":[15,18,28,22,15,10,10,22],"CSR":[11,29,26,18,11,16,12,16],"LBV":[14,28,24,24,28,25,10,13],"LES":[26,24,22,21,28,11,16,25],"MUT":[26,20,20,24,23,27,21,12],"OUL":[19,29,15,24,23,20,24,22],"CRS":[29,10,15,17,18,20,28,14],"DRI":[10,12,11,25,21,19,29,13],"UMR":[23,19,27,19,12,11,15,11],"SBM":[12,18,10,17,20,25,25,10],"MSA":[21,26,11,29,15,28,26,11],"CTM":[19,25,21,18,12,15,23,17],"TIM":[15,20,12,29,26,24,28,17],"ADH":[27,19,17,17,14,10,28,22],"ADI":[29,20,16,23,11,16,12,11],"ARD":[28,20,18,18,24,29,13,18],"BAL":[20,24,23,28,17,21,26,24],"IMO":[11,15,14,28,25,10,12,20],"RDS":[13,29,21,16,25,28,22,29],"ATH":[14,25,28,23,24,28,16,19],"NEJ":[27,23,23,14,18,14,22,12],"NKL":[14,14,16,10,22,26,25,16],"SNP":[24,17,17,19,12,18,19,14],"ALM":[28,21,22,27,27,23,13,15],"FBR":[26,21,28,23,20,24,22,29],"MDP":[12,24,24,29,22,11,14,15],"MAB":[10,21,22,10,27,27,29,10],"MLE":[28,10,22,24,19,15,28,21],"SRM":[15,16,27,11,10,20,18,11],"AKT":[13,29,28,21,28,16,12,21],"PRO":[21,14,25,16,17,14,26,17],"SOT":[26,23,27,22,27,29,18,24],"ALM2":[16,23,12,11,26,29,22,19],"EQD":[28,15,27,20,28,26,22,29],"REB":[20,21,14,29,25,21,24,29],"RIS":[11,11,22,11,26,14,17,25],"VAL":[18,29,10,13,24,28,18,22],"SAM":[27,10,12,11,23,25,17,18]};
 
     const MASI_DATA = {
       value: 13847.22,
@@ -5333,14 +5389,29 @@
 
     class UIController {
 
-      /** Generates sparkline SVG for a given change value */
-      static generateSparkline(change) {
+      /** Renders a list of stocks with high performance batching */
+      static renderList(stocks, containerId, mode = 'marche') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const html = stocks.map((s, i) => {
+          if (mode === 'marche') return UIController.createStockRow(s, i);
+          if (mode === 'search') return UIController.createStockSearchRow(s, i);
+          return '';
+        }).join('');
+
+        requestAnimationFrame(() => {
+          container.innerHTML = html;
+        });
+      }
+
+      /** Generates sparkline SVG for a given ticker */
+      static generateSparkline(ticker, change) {
         const up = change >= 0;
         const color = up ? 'var(--green)' : 'var(--red)';
-        const pts = [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
-          const noise = (Math.random() - 0.5) * 8;
-          return `${i * 7},${up ? 28 - i * 2 + noise : 20 + i * 1.5 + noise}`;
-        }).join(' ');
+        const staticPts = SPARKLINE_DATA[ticker] || [15, 12, 18, 14, 20, 16, 22, 18];
+        const pts = staticPts.map((v, i) => `${i * 8},${32 - v}`).join(' ');
+        
         return `<svg viewBox="0 0 56 32" preserveAspectRatio="none">
       <polyline class="path-animate" points="${pts}" pathLength="1000" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       <polyline class="animated-line-light" points="${pts}" pathLength="100" fill="none" stroke="rgba(255,255,255,1)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -5351,11 +5422,22 @@
        * Generates HTML string for a single stock row card.
        * Accessibility: arrow icons (▲/▼) always present alongside color.
        */
-      static createStockCard(stock, isStarred, index = 0) {
+      static createStockCard(stock, isStarred, index = 0, query = '') {
         const trend = stock.getTrend();
         const up = trend === 'up';
         const suspended = stock.isSuspended();
         const dir = suspended ? 'neutral' : trend;
+
+        const highlight = (text) => {
+          if (!query) return text;
+          const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(${escaped})`, 'gi');
+          return text.replace(regex, '<strong style="color:var(--gold);">$1</strong>');
+        };
+
+        const nameH = highlight(stock.name);
+        const tickerH = highlight(stock.ticker);
+        const sectorH = highlight(stock.getSectorLabel());
 
         return `
       <div class="stock-row ${dir}${suspended ? ' suspended' : ''}"
@@ -5365,10 +5447,10 @@
         <div class="stock-rank">${stock.rank}</div>
         ${stock.getLogoHTML(34)}
         <div class="stock-info">
-          <div class="stock-name">${stock.name}</div>
-          <div class="stock-sector">${stock.ticker} · ${stock.getSectorLabel()}</div>
+          <div class="stock-name">${nameH}</div>
+          <div class="stock-sector">${tickerH} · ${sectorH}</div>
         </div>
-        <div class="stock-chart">${suspended ? '' : UIController.generateSparkline(stock.change)}</div>
+        <div class="stock-chart">${suspended ? '' : UIController.generateSparkline(stock.ticker, stock.change)}</div>
         <div class="stock-right">
           <div class="stock-price">
             ${suspended ? '—' : stock.price.toLocaleString('fr-FR')}
@@ -5399,14 +5481,14 @@
       /**
        * Renders a list of Stock instances into a container efficiently.
        */
-      static renderList(containerId, stocks, watchlist) {
+      static renderList(containerId, stocks, watchlist, query = '') {
         const container = document.getElementById(containerId);
         if (!container) return;
         if (!stocks || !stocks.length) {
           container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">Aucun résultat trouvé</div>`;
           return;
         }
-        container.innerHTML = stocks.map((s, i) => UIController.createStockCard(s, watchlist.has(s.ticker), i)).join('');
+        container.innerHTML = stocks.map((s, i) => UIController.createStockCard(s, watchlist.has(s.ticker), i, query)).join('');
       }
 
       /** Skeleton loading placeholders */
@@ -5491,7 +5573,85 @@
             ['PROCHAIN DIV', stock.divDate],
           ].map(([l, v]) => `<div class="modal-stat"><div class="modal-stat-label">${l}</div><div class="modal-stat-val">${v}</div></div>`).join('');
         }
+        
+        // Add Alert Button toggle
+        const alerts = JSON.parse(localStorage.getItem('wamy_price_alerts') || '{}');
+        const alertBtn = el('btn-modal-alert');
+        if (alertBtn) {
+          const hasAlert = alerts[stock.ticker];
+          alertBtn.classList.toggle('active', !!hasAlert);
+          alertBtn.innerHTML = hasAlert 
+            ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gold)" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Alerte Active`
+            : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Alerte de Prix`;
+        }
+
         el('stock-modal')?.classList.add('open');
+        UIController.renderHistoricalChart(stock);
+      }
+
+      static renderHistoricalChart(stock) {
+        const canvas = document.getElementById('stock-chart-canvas');
+        if (!canvas) return;
+
+        // Cleanup existing chart if any
+        if (window.stockDetailChart) window.stockDetailChart.destroy();
+
+        // Generate 30 days of mock historical data based on current price
+        const labels = [];
+        const data = [];
+        let curr = stock.price;
+        const now = new Date();
+
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          labels.push(d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
+          
+          // Random walk backwards
+          const vol = 0.015;
+          curr = curr * (1 + (Math.random() - 0.52) * vol); // Slight upward trend (0.52)
+          data.unshift(curr);
+        }
+        data[29] = stock.price; // Ensure last point is exactly current price
+
+        const up = stock.change >= 0;
+        const color = up ? '#34d378' : '#f43f5e';
+
+        window.stockDetailChart = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Prix (MAD)',
+              data: data,
+              borderColor: color,
+              borderWidth: 2,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              tension: 0.3,
+              fill: true,
+              backgroundColor: (context) => {
+                const chart = context.chart;
+                const {ctx, chartArea} = chart;
+                if (!chartArea) return null;
+                const grad = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                grad.addColorStop(0, up ? 'rgba(52, 211, 120, 0.2)' : 'rgba(244, 63, 94, 0.2)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                return grad;
+              }
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: '#4d6b58', font: { size: 9, family: 'JetBrains Mono' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+              y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#4d6b58', font: { size: 9, family: 'JetBrains Mono' } } }
+            },
+            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+          }
+        });
       }
 
       /** Creates a portfolio holding card showing position + P&L */
@@ -5693,9 +5853,171 @@
         setInterval(() => this._updateMarketTimer(), 30000);
         this._updateIpoDisplay();
         setInterval(() => this._updateIpoDisplay(), 1000);
+
+        setInterval(() => {
+          this._simulatePrices();
+        }, 30000);
         
         ['pv-buy-price', 'pv-sell-price', 'pv-quantity'].forEach(id => {
           document.getElementById(id)?.addEventListener('input', () => this._calculatePlusValue());
+        });
+      }
+
+      _simulatePrices() {
+        const alerts = JSON.parse(localStorage.getItem('wamy_price_alerts') || '{}');
+        const triggered = [];
+
+        this.stocks.forEach(s => {
+          if (s.ticker === 'SAM') return; // Skip suspended
+          const volatility = 0.01; // 1% max change per 30s
+          const drift = 0.0005; // slight upward drift
+          const change = (Math.random() * 2 - 1) * volatility + drift;
+          const oldPrice = s.price;
+          s.price = Math.max(0.01, s.price * (1 + change));
+          s.change = ((s.price - oldPrice) / oldPrice) * 100;
+
+          // Check Alerts
+          if (alerts[s.ticker] && alerts[s.ticker].active) {
+            const threshold = alerts[s.ticker].threshold;
+            if ((change > 0 && s.price >= threshold) || (change < 0 && s.price <= threshold)) {
+              triggered.push(s.ticker);
+              alerts[s.ticker].active = false; // Disable after trigger
+            }
+          }
+
+          // Update sparkline data (shift left and push new point)
+          if (SPARKLINE_DATA[s.ticker]) {
+            const data = SPARKLINE_DATA[s.ticker];
+            data.shift();
+            const lastVal = data[data.length - 1];
+            const newVal = Math.max(5, Math.min(30, lastVal + (s.change * 5)));
+            data.push(newVal);
+          }
+        });
+
+        if (triggered.length) {
+          localStorage.setItem('wamy_price_alerts', JSON.stringify(alerts));
+          triggered.forEach(t => UIController.showToast(`🔔 ALERTE : ${t} a atteint son seuil !`));
+        }
+
+        // Trigger UI refresh
+        requestAnimationFrame(() => {
+          this._applyFilter(); // updates market list
+          if (this.currentPage === 'search') this._searchStocks();
+          if (this.currentPage === 'portfolio') {
+            this._renderPortfolio();
+            this._renderWatchlist();
+          }
+          if (this.currentPage === 'outils') {
+            this._renderQuickRef();
+            this._renderDivList();
+          }
+        });
+      }
+
+      _showCompareModal() {
+        const s1 = document.getElementById('compare-s1');
+        const s2 = document.getElementById('compare-s2');
+        if (s1 && s2) {
+          const opts = this.stocks.map(s => `<option value="${s.ticker}">${s.ticker} - ${s.name}</option>`).join('');
+          s1.innerHTML = opts;
+          s2.innerHTML = opts;
+          s1.value = 'ATW';
+          s2.value = 'BOA';
+
+          s1.onchange = () => this._renderCompareChart();
+          s2.onchange = () => this._renderCompareChart();
+        }
+        document.getElementById('compare-modal')?.classList.add('open');
+        setTimeout(() => this._renderCompareChart(), 300);
+      }
+
+      _renderCompareChart() {
+        const t1 = document.getElementById('compare-s1')?.value;
+        const t2 = document.getElementById('compare-s2')?.value;
+        const canvas = document.getElementById('compare-canvas');
+        if (!t1 || !t2 || !canvas) return;
+
+        if (window.compareChart) window.compareChart.destroy();
+
+        const genData = (ticker) => {
+          const s = this._findStock(ticker);
+          const data = [];
+          let curr = 100; // Base 100
+          for (let i = 0; i < 30; i++) {
+            curr = curr * (1 + (Math.random() - 0.5) * 0.02);
+            data.push(curr);
+          }
+          return data;
+        };
+
+        window.compareChart = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: Array.from({length:30}, (_,i) => i+1),
+            datasets: [
+              { label: t1, data: genData(t1), borderColor: '#f5c842', borderWidth: 2, pointRadius: 0, tension: 0.3 },
+              { label: t2, data: genData(t2), borderColor: '#34d378', borderWidth: 2, pointRadius: 0, tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true, labels: { color: '#fff', font: { size: 10 } } } },
+            scales: {
+              x: { display: false },
+              y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 9 } } }
+            }
+          }
+        });
+      }
+
+      _togglePriceAlert(ticker) {
+        let alerts = JSON.parse(localStorage.getItem('wamy_price_alerts') || '{}');
+        const stock = this._findStock(ticker);
+        if (alerts[ticker]) {
+          delete alerts[ticker];
+          UIController.showToast('Alerte supprimée');
+        } else {
+          // Set threshold to +5% or -5% based on current trend? Let's just do +2% for demo
+          alerts[ticker] = { threshold: stock.price * 1.02, active: true };
+          UIController.showToast(`Alerte 🔔 activée pour ${ticker} (+2%)`);
+        }
+        localStorage.setItem('wamy_price_alerts', JSON.stringify(alerts));
+        UIController.showStockModal(stock);
+      }
+
+      _updatePortfolioHistory(totalValue) {
+        if (!this._portfolioHistory) this._portfolioHistory = [];
+        this._portfolioHistory.push(totalValue);
+        if (this._portfolioHistory.length > 30) this._portfolioHistory.shift();
+        this._renderPortfolioHistory();
+      }
+
+      _renderPortfolioHistory() {
+        const canvas = document.getElementById('portfolio-history-canvas');
+        if (!canvas || !this._portfolioHistory.length) return;
+        if (window.portfolioChart) window.portfolioChart.destroy();
+        window.portfolioChart = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: this._portfolioHistory.map((_,i) => i),
+            datasets: [{
+              data: this._portfolioHistory,
+              borderColor: '#f5c842',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.4,
+              fill: true,
+              backgroundColor: 'rgba(245, 200, 66, 0.05)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } }
+          }
         });
       }
 
@@ -6046,6 +6368,23 @@
             return;
           }
 
+          if (t.id === 'btn-open-compare' || t.closest('#btn-open-compare')) {
+            this._showCompareModal(); return;
+          }
+
+          // CSV Export
+          if (t.id === 'btn-export-csv' || t.closest('#btn-export-csv')) {
+            this._exportPortfolioCSV(); return;
+          }
+
+          // Price Alert toggle in modal
+          if (t.id === 'btn-modal-alert' || t.closest('#btn-modal-alert')) {
+            const tickerText = document.getElementById('modal-ticker')?.textContent || '';
+            const ticker = tickerText.split(' · ')[0];
+            if (ticker) this._togglePriceAlert(ticker);
+            return;
+          }
+
           // Login screen buttons
           if (t.id === 'btn-login-email' || t.closest('#btn-login-email')) {
             const emailInput = document.getElementById('login-email');
@@ -6380,7 +6719,7 @@
             fuzzyMatch(s.getSectorLabel(), q)
           )
           : this.stocks;
-        UIController.renderList('search-results', pool, this.watchlist);
+        UIController.renderList('search-results', pool, this.watchlist, q);
 
         // Save to localStorage for recent searches
         if (q) {
@@ -6555,6 +6894,31 @@
           const saved = localStorage.getItem('wamy_portfolio');
           if (saved) this._portfolio = JSON.parse(saved);
         } catch (e) { }
+        this._portfolioHistory = []; // To track value over time for the graph
+      }
+
+      _exportPortfolioCSV() {
+        if (!this._portfolio.length) {
+          UIController.showToast('Portefeuille vide !');
+          return;
+        }
+        let csv = 'Ticker,Quantite,Prix Moyen,Prix Actuel,Valeur,Plus-Value MAD,Plus-Value %\n';
+        this._portfolio.forEach(h => {
+          const s = this._findStock(h.ticker);
+          const currentVal = s ? s.price * h.qty : 0;
+          const cost = h.avgPrice * h.qty;
+          const pnl = currentVal - cost;
+          const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+          csv += `${h.ticker},${h.qty},${h.avgPrice},${s ? s.price : 0},${currentVal},${pnl},${pnlPct.toFixed(2)}%\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `wamy_portfolio_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        UIController.showToast('CSV Exporté avec succès !');
       }
 
       _renderPortfolio() {
@@ -6601,18 +6965,37 @@
         const barEl = document.getElementById('port-bar-fill');
         if (barEl) barEl.style.width = Math.min(100, Math.max(0, 50 + totalPnlPct * 5)) + '%';
 
+        // Update history for graph
+        this._updatePortfolioHistory(totalValue);
+
         // Render holdings list (with remove button on each card)
         if (!this._portfolio.length) {
-          container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">
+          container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.02);border-radius:16px;border:1px dashed var(--border);">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
         <br>
-        Aucune position · Cliquez sur <strong style="color:var(--gold);">+ Ajouter</strong> pour commencer
+        <div style="font-weight:700;color:var(--text);margin-bottom:4px;font-size:14px;">Votre portefeuille est vide</div>
+        Cliquez sur <strong style="color:var(--gold);">+ Ajouter</strong> pour suivre vos titres
       </div>`;
           return;
         }
-        container.innerHTML = this._portfolio.map(h =>
+        
+        // Add Header with Export Button
+        let html = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 4px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.05em;font-family:'Syne',sans-serif;">MES POSITIONS</div>
+            <button id="btn-export-csv" style="background:none;border:none;color:var(--gold);font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;opacity:0.8;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              EXPORTER CSV
+            </button>
+          </div>
+        `;
+        html += this._portfolio.map(h =>
           UIController.createPortfolioCard(h, this._findStock(h.ticker))
         ).join('');
+        container.innerHTML = html;
+
+        // Attach export listener (event delegation already handles button IDs but let's be explicit if needed)
+        // Actually best to handle it in _attachEventListeners
 
         // Also refresh watchlist as it's now on the same page
         this._renderWatchlist();
@@ -6625,10 +7008,11 @@
         if (countEl) countEl.textContent = this.watchlist.size;
         const favs = this.stocks.filter(s => this.watchlist.has(s.ticker));
         if (!favs.length) {
-          container.innerHTML = `<div class="fav-empty">
+          container.innerHTML = `<div class="fav-empty" style="border:1px dashed var(--border2);background:rgba(255,255,255,0.01);">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <div class="fav-empty-text">Aucun favori pour l'instant</div>
-        <div class="fav-empty-sub">Appuyez sur l'étoile au coin d'une action</div>
+        <div class="fav-empty-text">Votre liste est vide</div>
+        <div class="fav-empty-sub">Appuyez sur l'étoile au coin d'une action pour la suivre ici.</div>
+        <button class="login-btn-primary" style="margin-top:20px;padding:10px 24px;font-size:12px;height:auto;" onclick="app._showPage('marche')">Explorer le Marché</button>
       </div>`;
           return;
         }
