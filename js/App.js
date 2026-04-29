@@ -161,13 +161,13 @@ class WamyApp {
     try { localStorage.setItem('wamy_user', JSON.stringify(user)); } catch(e) {}
     this._hideLoginScreen();
     this._startApp();
-    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Bienvenue ${user.name} !`);
+    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.T('msg_welcome')} ${user.name}!`);
   }
 
   _logout() {
     try { localStorage.removeItem('wamy_user'); } catch(e) {}
     this._showLoginScreen();
-    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Déconnexion réussie`);
+    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> ${window.T('msg_logout_success')}`);
   }
 
   // ══════════════════════════════════════════════════════
@@ -194,11 +194,11 @@ class WamyApp {
         const passInput  = document.getElementById('login-pass');
         const email = emailInput ? emailInput.value.trim() : '';
         if (!email || !email.includes('@')) {
-          UIController.showToast('Veuillez entrer une adresse e-mail valide');
+          UIController.showToast(window.T('msg_invalid_email'));
           return;
         }
         if (passInput && passInput.value.length < 4) {
-          UIController.showToast('Le mot de passe est trop court');
+          UIController.showToast(window.T('msg_short_pass'));
           return;
         }
         // Mock user creation from email Prefix
@@ -443,8 +443,8 @@ class WamyApp {
   // ══════════════════════════════════════════════════════
   _toggleStar(ticker) {
     const adding = !this.watchlist.has(ticker);
-    if (adding) { this.watchlist.add(ticker);    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;margin-bottom:2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Ajouté — ${ticker}`); }
-    else        { this.watchlist.delete(ticker); UIController.showToast(`Retiré — ${ticker}`); }
+    if (adding) { this.watchlist.add(ticker);    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;margin-bottom:2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${window.T('msg_added')}${ticker}`); }
+    else        { this.watchlist.delete(ticker); UIController.showToast(`${window.T('msg_removed')}${ticker}`); }
     this._saveWatchlist();
     this._applyFilter();
     if (this.currentPage === 'favoris') this._renderWatchlist();
@@ -452,7 +452,7 @@ class WamyApp {
 
   _removeFav(ticker) {
     this.watchlist.delete(ticker);
-    UIController.showToast('Retiré — ' + ticker);
+    UIController.showToast(window.T('msg_removed') + ticker);
     this._saveWatchlist();
     this._applyFilter();
     this._renderWatchlist();
@@ -491,7 +491,7 @@ class WamyApp {
       s.getSectorLabel().toLowerCase().includes(q)
     ).slice(0, 6);
     if (!matches.length) {
-      results.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">Aucune action trouvée</div>`;
+      results.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">${window.T('msg_no_stock_found')}</div>`;
       return;
     }
     results.innerHTML = matches.map(s => `
@@ -582,14 +582,14 @@ class WamyApp {
     this._savePortfolio();
     this._closeAddStockModal();
     this._renderPortfolio();
-    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><polyline points="20 6 9 17 4 12"/></svg> ${ticker} ajouté au portefeuille !`);
+    UIController.showToast(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-bottom:2px"><polyline points="20 6 9 17 4 12"/></svg> ${ticker} ${window.T('msg_added_port')}`);
   }
 
   _removePosition(ticker) {
     this._portfolio = this._portfolio.filter(h => h.ticker !== ticker);
     this._savePortfolio();
     this._renderPortfolio();
-    UIController.showToast('Retiré — ' + ticker);
+    UIController.showToast(window.T('msg_removed') + ticker);
   }
 
   _savePortfolio() {
@@ -651,7 +651,8 @@ class WamyApp {
       container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
         <br>
-        Aucune position · Cliquez sur <strong style="color:var(--gold);">+ Ajouter</strong> pour commencer
+        <span style="display:block;margin-bottom:4px;font-weight:700;">${window.T('port_empty_msg')}</span>
+        ${window.T('port_empty_sub')}
       </div>`;
       return;
     }
@@ -669,8 +670,8 @@ class WamyApp {
     if (!favs.length) {
       container.innerHTML = `<div class="fav-empty">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <div class="fav-empty-text">Aucun favori pour l'instant</div>
-        <div class="fav-empty-sub">Appuyez sur l'étoile au coin d'une action</div>
+        <div class="fav-empty-text">${window.T('fav_empty_msg')}</div>
+        <div class="fav-empty-sub">${window.T('fav_empty_sub')}</div>
       </div>`;
       return;
     }
@@ -749,7 +750,7 @@ class WamyApp {
     if (countEl) countEl.textContent = stocks.length + ' actions';
     if (!container) return;
     if (!stocks.length) {
-      container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">Aucune action trouvée</div>`;
+      container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">${window.T('msg_no_stock_found')}</div>`;
       return;
     }
     container.innerHTML = stocks.map(s => UIController.createQrCard(s)).join('');
@@ -917,7 +918,7 @@ class WamyApp {
       color  = 'var(--gold)';
     }
 
-    if (!sorted.length) { UIController.showToast('Pas de données disponibles'); return; }
+    if (!sorted.length) { UIController.showToast(window.T('msg_no_data')); return; }
 
     const top    = sorted[0];
     const bottom = sorted[sorted.length - 1];

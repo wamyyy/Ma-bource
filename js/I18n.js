@@ -273,6 +273,12 @@ const TRANSLATIONS = {
     msg_csv_exported: 'CSV Exporté avec succès !',
     msg_port_empty_toast: 'Portefeuille vide !',
     msg_no_stock_found: 'Aucune action trouvée',
+    msg_welcome: 'Bienvenue',
+    msg_logout_success: 'Déconnexion réussie',
+    msg_invalid_email: 'Veuillez entrer une adresse e-mail valide',
+    msg_short_pass: 'Le mot de passe est trop court',
+    msg_added: 'Ajouté — ',
+    msg_no_data: 'Pas de données disponibles',
     
     // -- User Labels --
     user_default_name: 'Utilisateur',
@@ -546,6 +552,12 @@ const TRANSLATIONS = {
     msg_csv_exported: 'تم تصدير ملف CSV بنجاح!',
     msg_port_empty_toast: 'المحفظة فارغة!',
     msg_no_stock_found: 'لم يتم العثور على أي سهم',
+    msg_welcome: 'مرحباً',
+    msg_logout_success: 'تم تسجيل الخروج بنجاح',
+    msg_invalid_email: 'يرجى إدخال بريد إلكتروني صحيح',
+    msg_short_pass: 'كلمة المرور قصيرة جداً',
+    msg_added: 'تمت الإضافة — ',
+    msg_no_data: 'لا توجد بيانات متاحة',
     
     // -- User Labels --
     user_default_name: 'مستخدم',

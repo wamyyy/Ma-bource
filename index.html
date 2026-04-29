@@ -2207,12 +2207,46 @@
     @media (max-width: 480px) {
 
       .logo-text,
-      .logo-badge {
-        display: none;
+      .logo-badge,
+      .logo-sub,
+      .market-time {
+        display: none !important;
       }
 
       .header {
-        padding: 8px 16px;
+        padding: 6px 8px !important;
+        gap: 4px !important;
+      }
+
+      .logo-icon {
+        width: 30px !important;
+        height: 30px !important;
+      }
+
+      .logo-name {
+        font-size: 12px !important;
+      }
+
+      .market-timer {
+        padding: 4px 8px !important;
+      }
+
+      .header-actions {
+        gap: 6px !important;
+      }
+
+      .btn-icon {
+        width: 32px !important;
+        height: 32px !important;
+      }
+
+      .lang-toggle {
+        transform: scale(0.9);
+      }
+
+      .theme-toggle {
+        transform: scale(0.85);
+        transform-origin: right center;
       }
 
       .btn-login {
@@ -2250,6 +2284,36 @@
 
       .nav-item span {
         font-size: 9px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .market-status {
+        display: none !important;
+      }
+      .logo-name {
+        display: none !important;
+      }
+      .market-timer {
+        padding: 4px 6px !important;
+        border-radius: 20px !important;
+      }
+      .header {
+        padding: 4px 6px !important;
+        gap: 2px !important;
+      }
+      .header-actions {
+        gap: 4px !important;
+      }
+      .btn-icon {
+        width: 28px !important;
+        height: 28px !important;
+      }
+      .lang-toggle {
+        transform: scale(0.8);
+      }
+      .theme-toggle {
+        transform: scale(0.75);
       }
     }
 
@@ -4193,26 +4257,40 @@
       overflow: hidden;
       gap: 0;
       flex-shrink: 0;
+      padding: 2px;
     }
     .lang-btn {
       background: transparent;
       border: none;
-      color: var(--text2);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 4px 9px;
+      padding: 4px 6px;
       cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.04em;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.6;
+      filter: saturate(0.7);
+      border-radius: 16px;
     }
     .lang-btn.active {
-      background: var(--green);
-      color: #000;
-      border-radius: 20px;
+      background: var(--card2);
+      opacity: 1;
+      filter: saturate(1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
-    .lang-btn:hover:not(.active) {
-      color: var(--text);
+    .light .lang-btn.active {
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .flag-icon {
+      width: 18px;
+      height: 13px;
+      border-radius: 2.5px;
+      display: block;
+      transition: transform 0.2s;
+    }
+    .lang-btn.active .flag-icon {
+      transform: scale(1.05);
     }
   </style>
 </head>
@@ -4278,10 +4356,21 @@
             <path d="m21 21-4.35-4.35" />
           </svg>
         </div>
-        <!-- Language Toggle: FR / عر -->
+        <!-- Language Toggle (Flags) -->
         <div class="lang-toggle" id="lang-toggle" role="group" aria-label="Langue">
-          <button class="lang-btn active" data-lang="fr" onclick="window.I18n?.setLang('fr'); window.app?._setLang('fr');">FR</button>
-          <button class="lang-btn" data-lang="ar" onclick="window.I18n?.setLang('ar'); window.app?._setLang('ar');">عر</button>
+          <button class="lang-btn active" data-lang="fr" onclick="window.I18n?.setLang('fr'); window.app?._setLang('fr');" aria-label="Français">
+            <svg class="flag-icon" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#fff" d="M0 0h640v480H0z"/>
+              <path fill="#002654" d="M0 0h213.3v480H0z"/>
+              <path fill="#ce1126" d="M426.7 0H640v480H426.7z"/>
+            </svg>
+          </button>
+          <button class="lang-btn" data-lang="ar" onclick="window.I18n?.setLang('ar'); window.app?._setLang('ar');" aria-label="Arabe">
+            <svg class="flag-icon" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#c1272d" d="M0 0h640v480H0z"/>
+              <path d="M320 179.4l41.2 126.9-108-78.4h133.6l-108 78.4L320 179.4z" fill="none" stroke="#006233" stroke-width="11.7"/>
+            </svg>
+          </button>
         </div>
         <div class="theme-toggle" role="button" tabindex="0" aria-label="Changer le thème">
           <div class="theme-toggle-knob">
@@ -5308,28 +5397,28 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round">
             <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          Configuration Alerte IPO
+          <span data-i18n="modal_ipo_title">Configuration Alerte IPO</span>
         </div>
-        <div class="add-stock-sub">Gérer le compte à rebours avant IPO</div>
+        <div class="add-stock-sub" data-i18n="modal_ipo_subtitle">Gérer le compte à rebours avant IPO</div>
       </div>
       
       <div class="add-stock-inputs" style="margin-top:16px;">
         <div class="input-group">
-          <div class="input-label">Nom de l'entreprise</div>
-          <input type="text" class="calc-input" id="ipo-company-name" placeholder="ex: Akdital">
+          <div class="input-label" data-i18n="label_comp_name">Nom de l'entreprise</div>
+          <input type="text" class="calc-input" id="ipo-company-name" placeholder="ex: Akdital" data-i18n="placeholder_comp_name">
         </div>
         <div class="input-group">
-          <div class="input-label">Prix Cible <span class="input-badge">MAD</span></div>
+          <div class="input-label"><span data-i18n="modal_target_price">Prix Cible</span> <span class="input-badge">MAD</span></div>
           <input type="number" class="calc-input" id="ipo-target-price" placeholder="ex: 500.00" inputmode="decimal">
         </div>
         <div class="input-group">
-          <div class="input-label">Date limite (Jour/Mois/Année)</div>
+          <div class="input-label" data-i18n="label_ipo_date">Date limite (Jour/Mois/Année)</div>
           <input type="date" class="calc-input" id="ipo-target-date">
         </div>
       </div>
       
       <div style="display:flex;gap:12px;margin-top:24px;">
-        <button class="login-btn-primary" id="btn-save-ipo" style="flex:1;">Ajouter l'Alerte</button>
+        <button class="login-btn-primary" id="btn-save-ipo" style="flex:1;" data-i18n="btn_add_ipo">Ajouter l'Alerte</button>
       </div>
 
       <!-- IPO Alerts List -->
@@ -5342,7 +5431,7 @@
 
       <button class="modal-close" style="margin-top:16px;width:100%" id="btn-modal-close-ipo">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:6px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        Annuler
+        <span data-i18n="cancel">Annuler</span>
       </button>
     </div>
   </div>
@@ -5352,8 +5441,8 @@
     <div class="modal add-stock-modal-body">
       <div class="modal-handle"></div>
       <div class="add-stock-header">
-        <div class="add-stock-title">Comparer deux actions</div>
-        <div class="add-stock-sub">Evolution relative (30 derniers jours)</div>
+        <div class="add-stock-title" data-i18n="modal_compare_title">Comparer deux actions</div>
+        <div class="add-stock-sub" data-i18n="modal_compare_subtitle">Evolution relative (30 derniers jours)</div>
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
         <select class="calc-input" id="compare-s1" style="font-size:12px;"></select>
@@ -5362,7 +5451,7 @@
       <div style="margin-top:20px; height:220px; position:relative;">
         <canvas id="compare-canvas"></canvas>
       </div>
-      <button class="modal-close" style="margin-top:20px;width:100%" onclick="document.getElementById('compare-modal').classList.remove('open')">Fermer</button>
+      <button class="modal-close" style="margin-top:20px;width:100%" onclick="document.getElementById('compare-modal').classList.remove('open')" data-i18n="btn_close">Fermer</button>
     </div>
   </div>
 
@@ -5380,9 +5469,9 @@
             <line x1="12" y1="12" x2="12" y2="16" />
             <line x1="10" y1="14" x2="14" y2="14" />
           </svg>
-          Ajouter une Position
+          <span data-i18n="modal_add_position">Ajouter une Position</span>
         </div>
-        <div class="add-stock-sub">Saisir les informations de l'achat</div>
+        <div class="add-stock-sub" data-i18n="modal_add_position_sub">Saisir les informations de l'achat</div>
       </div>
 
       <!-- Stock search -->
@@ -5391,7 +5480,7 @@
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
-        <input type="text" id="add-stock-search" placeholder="Rechercher une action... (ex: ATW, IAM)"
+        <input type="text" id="add-stock-search" placeholder="Rechercher une action... (ex: ATW, IAM)" data-i18n="placeholder_search_stock"
           autocomplete="off">
       </div>
       <div class="add-stock-results" id="add-stock-results"></div>
@@ -5403,11 +5492,11 @@
       <!-- Inputs -->
       <div class="add-stock-inputs">
         <div class="input-group">
-          <div class="input-label">Quantité <span class="input-badge">TITRES</span></div>
+          <div class="input-label"><span data-i18n="label_qty">Quantité</span> <span class="input-badge">TITRES</span></div>
           <input type="number" class="calc-input" id="add-stock-qty" placeholder="ex: 10" inputmode="numeric" min="1">
         </div>
         <div class="input-group">
-          <div class="input-label">Prix moyen d'achat <span class="input-badge">MAD</span></div>
+          <div class="input-label"><span data-i18n="label_avg_price">Prix moyen d'achat</span> <span class="input-badge">MAD</span></div>
           <input type="number" class="calc-input" id="add-stock-price" placeholder="ex: 692.00" inputmode="decimal">
         </div>
       </div>
@@ -5415,15 +5504,15 @@
       <!-- Preview -->
       <div class="add-stock-preview" id="add-stock-preview" style="display:none">
         <div class="add-stock-preview-row">
-          <span class="result-key">Valeur totale</span>
+          <span class="result-key" data-i18n="label_total_val">Valeur totale</span>
           <span class="result-val" id="add-preview-total" style="color:var(--gold)">—</span>
         </div>
         <div class="add-stock-preview-row">
-          <span class="result-key">Cours actuel</span>
+          <span class="result-key" data-i18n="label_curr_price">Cours actuel</span>
           <span class="result-val" id="add-preview-current">—</span>
         </div>
         <div class="add-stock-preview-row">
-          <span class="result-key">P&amp;L immédiat</span>
+          <span class="result-key" data-i18n="label_pnl">P&amp;L immédiat</span>
           <span class="result-val" id="add-preview-pnl">—</span>
         </div>
       </div>
@@ -5433,7 +5522,7 @@
           stroke-linecap="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        Ajouter au Portefeuille
+        <span data-i18n="btn_add_port">Ajouter au Portefeuille</span>
       </button>
       <button class="modal-close" id="btn-add-stock-close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -5441,7 +5530,7 @@
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
-        Annuler
+        <span data-i18n="cancel">Annuler</span>
       </button>
     </div>
   </div>
@@ -5460,9 +5549,9 @@
 
 
       <div class="login-form">
-        <input type="email" id="login-email" class="login-input" placeholder="Adresse e-mail">
-        <input type="password" id="login-pass" class="login-input" placeholder="Mot de passe">
-        <button class="login-btn-primary" id="btn-login-email">Se Connecter</button>
+        <input type="email" id="login-email" class="login-input" placeholder="Adresse e-mail" data-i18n="placeholder_email">
+        <input type="password" id="login-pass" class="login-input" placeholder="Mot de passe" data-i18n="placeholder_pass">
+        <button class="login-btn-primary" id="btn-login-email" data-i18n="btn_login">Se Connecter</button>
       </div>
 
 
@@ -5479,14 +5568,14 @@
           <line x1="19" y1="8" x2="19" y2="14" />
           <line x1="22" y1="11" x2="16" y2="11" />
         </svg>
-        Créer un compte
+        <span data-i18n="btn_register">Créer un compte</span>
       </button>
 
 
       <div style="display:flex;align-items:center;gap:12px;margin:18px 0 6px;">
         <div style="flex:1;height:1px;background:var(--border2);"></div>
         <span
-          style="color:var(--text3);font-size:12px;font-weight:600;letter-spacing:0.08em;white-space:nowrap;">OU</span>
+          style="color:var(--text3);font-size:12px;font-weight:600;letter-spacing:0.08em;white-space:nowrap;" data-i18n="divider_or">OU</span>
         <div style="flex:1;height:1px;background:var(--border2);"></div>
       </div>
 
@@ -5506,7 +5595,7 @@
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             fill="#EA4335" />
         </svg>
-        Google
+        <span data-i18n="btn_google">Google</span>
       </button>
     </div>
   </div>
@@ -5521,8 +5610,8 @@
     </button>
     <div class="register-content">
       <div class="register-header">
-        <div class="register-title">Créer un compte</div>
-        <div class="register-subtitle">Rejoignez MA-BOURSE · Simulation 100% gratuite</div>
+        <div class="register-title" data-i18n="btn_register">Créer un compte</div>
+        <div class="register-subtitle" data-i18n="register_subtitle">Rejoignez MA-BOURSE · Simulation 100% gratuite</div>
       </div>
 
       <div class="register-form" id="register-form">
@@ -5530,52 +5619,52 @@
         <!-- Nom & Prénom -->
         <div class="register-row">
           <div class="register-field" style="flex:1;min-width:0;">
-            <div class="register-field-label">Prénom</div>
-            <input type="text" id="reg-prenom" class="login-input" placeholder="Ayoub" autocomplete="given-name">
+            <div class="register-field-label" data-i18n="label_firstname">Prénom</div>
+            <input type="text" id="reg-prenom" class="login-input" placeholder="Ayoub" autocomplete="given-name" data-i18n="placeholder_firstname">
           </div>
           <div class="register-field" style="flex:1;min-width:0;">
-            <div class="register-field-label">Nom</div>
-            <input type="text" id="reg-nom" class="login-input" placeholder="Talib" autocomplete="family-name">
+            <div class="register-field-label" data-i18n="label_lastname">Nom</div>
+            <input type="text" id="reg-nom" class="login-input" placeholder="Talib" autocomplete="family-name" data-i18n="placeholder_lastname">
           </div>
         </div>
 
         <!-- Âge & Nationalité -->
         <div class="register-row">
           <div class="register-field" style="flex:0 0 90px;">
-            <div class="register-field-label">Âge</div>
+            <div class="register-field-label" data-i18n="label_age">Âge</div>
             <input type="number" id="reg-age" class="login-input" placeholder="25" min="16" max="99"
-              style="text-align:center;">
+              style="text-align:center;" data-i18n="placeholder_age">
           </div>
           <div class="register-field" style="flex:1;min-width:0;">
-            <div class="register-field-label">Nationalité</div>
+            <div class="register-field-label" data-i18n="label_nationality">Nationalité</div>
             <select id="reg-nationalite" class="register-select">
-              <option value="">Sélectionner…</option>
-              <option value="MA">🇲🇦 Marocain(e)</option>
-              <option value="FR">🇫🇷 Français(e)</option>
-              <option value="DZ">🇩🇿 Algérien(ne)</option>
-              <option value="TN">🇹🇳 Tunisien(ne)</option>
-              <option value="SN">🇸🇳 Sénégalais(e)</option>
-              <option value="CI">🇨🇮 Ivoirien(ne)</option>
-              <option value="EG">🇪🇬 Égyptien(ne)</option>
-              <option value="SA">🇸🇦 Saoudien(ne)</option>
-              <option value="OTHER">🌍 Autre</option>
+              <option value="" data-i18n="select_nationality">Sélectionner…</option>
+              <option value="MA" data-i18n="nat_ma">🇲🇦 Marocain(e)</option>
+              <option value="FR" data-i18n="nat_fr">🇫🇷 Français(e)</option>
+              <option value="DZ" data-i18n="nat_dz">🇩🇿 Algérien(ne)</option>
+              <option value="TN" data-i18n="nat_tn">🇹🇳 Tunisien(ne)</option>
+              <option value="SN" data-i18n="nat_sn">🇸🇳 Sénégalais(e)</option>
+              <option value="CI" data-i18n="nat_ci">🇨🇮 Ivoirien(ne)</option>
+              <option value="EG" data-i18n="nat_eg">🇪🇬 Égyptien(ne)</option>
+              <option value="SA" data-i18n="nat_sa">🇸🇦 Saoudien(ne)</option>
+              <option value="OTHER" data-i18n="nat_other">🌍 Autre</option>
             </select>
           </div>
         </div>
 
         <!-- Email -->
         <div class="register-field">
-          <div class="register-field-label">Adresse e-mail</div>
-          <input type="email" id="reg-email" class="login-input" placeholder="vous@exemple.com" autocomplete="email">
+          <div class="register-field-label" data-i18n="login_email">Adresse e-mail</div>
+          <input type="email" id="reg-email" class="login-input" placeholder="vous@exemple.com" autocomplete="email" data-i18n="placeholder_email">
         </div>
 
         <div class="register-divider"></div>
 
         <!-- Mot de passe -->
         <div class="register-field">
-          <div class="register-field-label">Mot de passe</div>
+          <div class="register-field-label" data-i18n="login_pass">Mot de passe</div>
           <div class="register-password-eye">
-            <input type="password" id="reg-pass" class="login-input" placeholder="Minimum 6 caractères">
+            <input type="password" id="reg-pass" class="login-input" placeholder="Minimum 6 caractères" data-i18n="placeholder_pass">
             <button type="button" id="btn-toggle-pass" tabindex="-1">
               <svg id="eye-icon-pass" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2">
@@ -5588,9 +5677,9 @@
 
         <!-- Confirmer mot de passe -->
         <div class="register-field">
-          <div class="register-field-label">Confirmer le mot de passe</div>
+          <div class="register-field-label" data-i18n="login_pass2">Confirmer le mot de passe</div>
           <div class="register-password-eye">
-            <input type="password" id="reg-pass2" class="login-input" placeholder="Répéter le mot de passe">
+            <input type="password" id="reg-pass2" class="login-input" placeholder="Répéter le mot de passe" data-i18n="placeholder_pass2">
             <button type="button" id="btn-toggle-pass2" tabindex="-1">
               <svg id="eye-icon-pass2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2">
@@ -5604,7 +5693,7 @@
         <!-- Terms -->
         <label class="register-agree">
           <input type="checkbox" id="reg-terms">
-          J'accepte les conditions d'utilisation et confirme que les données sont simulées à des fins éducatives.
+          <span data-i18n="register_terms">J'accepte les conditions d'utilisation et confirme que les données sont simulées à des fins éducatives.</span>
         </label>
 
         <button class="register-btn" id="btn-register-submit">
@@ -5615,7 +5704,7 @@
             <line x1="19" y1="8" x2="19" y2="14" />
             <line x1="22" y1="11" x2="16" y2="11" />
           </svg>
-          Créer mon compte
+          <span data-i18n="btn_create_acc">Créer mon compte</span>
         </button>
 
       </div>

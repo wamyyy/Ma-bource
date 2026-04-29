@@ -91,7 +91,7 @@ export class UIController {
     const container = document.getElementById(containerId);
     if (!container) return;
     if (!stocks || !stocks.length) {
-      container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">Aucun résultat trouvé</div>`;
+      container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:12px;">${window.T('msg_no_stock_found')}</div>`;
       return;
     }
     container.innerHTML = stocks.map((s, i) => UIController.createStockCard(s, watchlist.has(s.ticker), i)).join('');
