@@ -90,7 +90,6 @@
       overflow: hidden;
       height: 100vh;
       width: 100vw;
-      user-select: none;
       font-size: 14px;
       line-height: 1.3;
     }
@@ -2605,13 +2604,11 @@
     }
 
     /* Disable text selection globally except inputs */
-    body,
+    /* Only lock selection on chrome UI elements, not on data cards */
     .shell,
-    .stock-row,
     .nav-item,
     .filter-chip,
-    .tab,
-    .div-card {
+    .tab {
       user-select: none;
       -webkit-user-select: none;
     }
@@ -4372,7 +4369,7 @@
             </svg>
           </button>
         </div>
-        <div class="theme-toggle" role="button" tabindex="0" aria-label="Changer le thème">
+        <div class="theme-toggle" id="theme-toggle-btn" role="button" tabindex="0" aria-label="Changer le thème" aria-pressed="false">
           <div class="theme-toggle-knob">
             <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round">
@@ -5196,94 +5193,104 @@
   <div class="modal-overlay" id="stock-modal">
     <div class="modal">
       <div class="modal-handle"></div>
-      <div class="modal-header">
-        <div class="modal-avatar" id="modal-avatar"></div>
-        <div class="modal-title">
-          <div class="modal-name" id="modal-name"></div>
-          <div class="modal-ticker" id="modal-ticker"></div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:right;" data-i18n="modal_cours">COURS
-          </div>
-          <div id="modal-change"
-            style="display:flex;justify-content:flex-end;font-size:16px;font-weight:800;margin-top:2px;"></div>
-        </div>
-      </div>
-      <div class="modal-price-big" id="modal-price"></div>
       
-      <!-- Session Range Bar -->
-      <div class="range-container" id="modal-range-container">
-        <div class="range-labels">
-          <span id="modal-low">—</span>
-          <span id="modal-high">—</span>
-        </div>
-        <div class="range-bar-bg">
-          <div class="range-bar-fill" id="modal-range-fill"></div>
-          <div class="range-indicator" id="modal-range-indicator"></div>
-        </div>
-      </div>
-
-      <!-- Historical Chart Section -->
-      <div style="margin: 0 0 16px 0; padding: 0 16px;">
-        <!-- Chart container -->
-        <div style="height: 180px; position: relative;">
-          <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
-        </div>
-        <!-- Controls -->
-        <div style="display:flex; justify-content:space-between; margin-top:8px;">
-          <div class="chart-time-pills" style="display:flex; gap:6px;">
-            <div class="chart-pill" data-range="1W" onclick="window.app._changeChartRange('1W')">1S</div>
-            <div class="chart-pill" data-range="1M" onclick="window.app._changeChartRange('1M')">1M</div>
-            <div class="chart-pill active" data-range="YTD" onclick="window.app._changeChartRange('YTD')">YTD</div>
-            <div class="chart-pill" data-range="1Y" onclick="window.app._changeChartRange('1Y')">1A</div>
-            <div class="chart-pill" data-range="MAX" onclick="window.app._changeChartRange('MAX')">MAX</div>
-          </div>
-          <div class="chart-type-pills" style="display:flex; gap:6px;">
-            <div class="chart-pill active" data-type="Line" onclick="window.app._changeChartType('Line')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+      <div class="modal-content-desktop">
+        <!-- LEFT COLUMN -->
+        <div class="modal-desktop-left">
+          <div class="modal-header">
+            <div class="modal-avatar" id="modal-avatar"></div>
+            <div class="modal-title">
+              <div class="modal-name" id="modal-name"></div>
+              <div class="modal-ticker" id="modal-ticker"></div>
             </div>
-            <div class="chart-pill" data-type="Candlestick" onclick="window.app._changeChartType('Candlestick')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="5" width="6" height="14" rx="1"></rect><line x1="12" y1="2" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+            <div>
+              <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:right;" data-i18n="modal_cours">COURS
+              </div>
+              <div id="modal-change"
+                style="display:flex;justify-content:flex-end;font-size:16px;font-weight:800;margin-top:2px;"></div>
             </div>
           </div>
+          <div class="modal-price-big" id="modal-price"></div>
+          
+          <!-- Session Range Bar -->
+          <div class="range-container" id="modal-range-container">
+            <div class="range-labels">
+              <span id="modal-low">—</span>
+              <span id="modal-high">—</span>
+            </div>
+            <div class="range-bar-bg">
+              <div class="range-bar-fill" id="modal-range-fill"></div>
+              <div class="range-indicator" id="modal-range-indicator"></div>
+            </div>
+          </div>
+
+          <!-- Historical Chart Section -->
+          <div style="margin: 0 0 16px 0; padding: 0 16px;" class="chart-section-wrapper">
+            <!-- Chart container -->
+            <div style="height: 180px; position: relative;">
+              <div id="tv-chart-container" style="width: 100%; height: 100%;"></div>
+            </div>
+            <!-- Controls -->
+            <div style="display:flex; justify-content:space-between; margin-top:8px;">
+              <div class="chart-time-pills" style="display:flex; gap:6px;">
+                <div class="chart-pill" data-range="1W" onclick="window.app._changeChartRange('1W')">1S</div>
+                <div class="chart-pill" data-range="1M" onclick="window.app._changeChartRange('1M')">1M</div>
+                <div class="chart-pill active" data-range="YTD" onclick="window.app._changeChartRange('YTD')">YTD</div>
+                <div class="chart-pill" data-range="1Y" onclick="window.app._changeChartRange('1Y')">1A</div>
+                <div class="chart-pill" data-range="MAX" onclick="window.app._changeChartRange('MAX')">MAX</div>
+              </div>
+              <div class="chart-type-pills" style="display:flex; gap:6px;">
+                <div class="chart-pill active" data-type="Line" onclick="window.app._changeChartType('Line')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                </div>
+                <div class="chart-pill" data-type="Candlestick" onclick="window.app._changeChartType('Candlestick')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="5" width="6" height="14" rx="1"></rect><line x1="12" y1="2" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- RIGHT COLUMN -->
+        <div class="modal-desktop-right">
+          <div class="modal-stats" id="modal-stats"></div>
+
+          <!-- Mini Order Book -->
+          <div class="order-book" id="modal-order-book">
+            <div class="order-book-title">Profondeur du Marché (Mini)</div>
+            <div class="order-book-grid">
+              <div class="ob-side">
+                <div class="ob-label">ACHAT (BID)</div>
+                <div class="ob-val ob-buy" id="modal-bid">—</div>
+              </div>
+              <div class="ob-divider"></div>
+              <div class="ob-side">
+                <div class="ob-label">VENTE (ASK)</div>
+                <div class="ob-val ob-sell" id="modal-ask">—</div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="modal-action-btn" id="btn-modal-alert" style="flex:1;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Alerte de Prix
+            </button>
+            <button class="modal-close" style="flex:1;margin-top:0;" id="btn-modal-close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" style="margin-right:6px">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              Fermer
+            </button>
+          </div>
         </div>
       </div>
-
-      <div class="modal-stats" id="modal-stats"></div>
-
-      <!-- Mini Order Book -->
-      <div class="order-book" id="modal-order-book">
-        <div class="order-book-title">Profondeur du Marché (Mini)</div>
-        <div class="order-book-grid">
-          <div class="ob-side">
-            <div class="ob-label">ACHAT (BID)</div>
-            <div class="ob-val ob-buy" id="modal-bid">—</div>
-          </div>
-          <div class="ob-divider"></div>
-          <div class="ob-side">
-            <div class="ob-label">VENTE (ASK)</div>
-            <div class="ob-val ob-sell" id="modal-ask">—</div>
-          </div>
-        </div>
-      </div>
-        <div style="display:flex;gap:10px;margin-top:16px;">
-          <button class="modal-action-btn" id="btn-modal-alert" style="flex:1;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            Alerte de Prix
-          </button>
-          <button class="modal-close" style="flex:1;margin-top:0;" id="btn-modal-close">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" style="margin-right:6px">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-            Fermer
-          </button>
-        </div>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="alert" aria-live="polite" aria-atomic="true"></div>
 
   <!-- ══════════ ALERT MENU MODAL ══════════ -->
   <div class="modal-overlay" id="price-alert-modal">
@@ -5323,7 +5330,7 @@
   </div>
 
   <!-- ══════════ WIDGET SUMMARY MODAL ══════════ -->
-  <div class="modal-overlay" id="widget-summary-overlay">
+  <div class="modal-overlay" id="widget-summary-overlay" role="dialog" aria-modal="true">
     <div class="modal wsm-panel" id="widget-summary-modal">
       <!-- Content injected by UIController.showWidgetSummaryModal -->
     </div>
@@ -5988,7 +5995,7 @@
         const staticPts = SPARKLINE_DATA[ticker] || [15, 12, 18, 14, 20, 16, 22, 18];
         const pts = staticPts.map((v, i) => `${i * 8},${32 - v}`).join(' ');
         
-        return `<svg viewBox="0 0 56 32" preserveAspectRatio="none">
+        return `<svg viewBox="0 0 56 32" preserveAspectRatio="none" aria-hidden="true" focusable="false">
       <polyline class="path-animate" points="${pts}" pathLength="1000" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       <polyline class="animated-line-light" points="${pts}" pathLength="100" fill="none" stroke="rgba(255,255,255,1)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
@@ -6019,7 +6026,7 @@
       <div class="stock-row ${dir}${suspended ? ' suspended' : ''} ${stock._flashClass || ''}"
            style="transition-delay: ${(index % 10) * 0.05}s"
            data-ticker="${stock.ticker}" role="button" tabindex="0"
-           aria-label="${stock.name}, ${stock.ticker}, ${stock.getSectorLabel()}">
+           aria-label="${stock.name}, ${stock.ticker}, ${stock.getSectorLabel()}${suspended ? ', Suspendu' : ', ' + stock.formatPrice() + ' MAD, ' + (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2) + '%'}">
         <div class="stock-rank">${stock.rank}</div>
         ${stock.getLogoHTML(34)}
         <div class="stock-info">
@@ -6111,7 +6118,18 @@
       static showToast(msg) {
         const t = document.getElementById('toast');
         if (!t) return;
-        t.innerHTML = msg;
+        // Safe DOM construction: extract any leading SVG (static markup) and set remaining
+        // text as a text node to prevent XSS from data-driven content.
+        const svgMatch = msg.match(/^(<svg[\s\S]*?<\/svg>)\s*/);
+        t.innerHTML = '';
+        if (svgMatch) {
+          const iconSpan = document.createElement('span');
+          iconSpan.innerHTML = svgMatch[1]; // only the SVG, not user data
+          t.appendChild(iconSpan);
+          t.appendChild(document.createTextNode(msg.slice(svgMatch[0].length)));
+        } else {
+          t.textContent = msg;
+        }
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 2500);
       }
@@ -6381,6 +6399,11 @@
       }
 
       _startApp() {
+        // Guard against double-init (e.g. login -> logout -> re-login without page reload)
+        if (this._timerInterval) clearInterval(this._timerInterval);
+        if (this._ipoInterval)   clearInterval(this._ipoInterval);
+        if (this._priceInterval) clearInterval(this._priceInterval);
+
         UIController.renderSkeleton('stock-list', 8);
         setTimeout(() => {
           this._loadPortfolio();
@@ -6391,14 +6414,11 @@
           this._renderQuickRef();
           this._searchStocks();
           this._updateMarketTimer();
-          setInterval(() => this._updateMarketTimer(), 30000);
+          this._timerInterval = setInterval(() => this._updateMarketTimer(), 30000);
           this._updateIpoDisplay();
-          setInterval(() => this._updateIpoDisplay(), 1000);
+          this._ipoInterval = setInterval(() => this._updateIpoDisplay(), 1000);
+          this._priceInterval = setInterval(() => this._simulatePrices(), 30000);
 
-          setInterval(() => {
-            this._simulatePrices();
-          }, 30000);
-          
           ['pv-buy-price', 'pv-sell-price', 'pv-quantity'].forEach(id => {
             document.getElementById(id)?.addEventListener('input', () => this._calculatePlusValue());
           });
@@ -6783,7 +6803,8 @@
       // ══════════════════════════════════════════════════════
       _registerServiceWorker() {
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js')
+          // Use relative path './sw.js' so PWA works when deployed to a subdirectory
+          navigator.serviceWorker.register('./sw.js')
             .catch(err => console.warn('SW registration failed:', err));
         }
 
@@ -7187,9 +7208,12 @@
 
           // Modal close — stock detail modal
           if (t.id === 'stock-modal') { t.classList.remove('open'); return; }
-          if (t.id === 'btn-modal-close' || (t.closest('.modal-close') && !t.closest('#add-stock-modal'))) {
+          if (t.id === 'btn-modal-close' || (t.closest('.modal-close') && !t.closest('#add-stock-modal') && !t.closest('#widget-summary-modal'))) {
             document.getElementById('stock-modal')?.classList.remove('open'); return;
           }
+
+          // Modal close — widget summary modal
+          if (t.id === 'widget-summary-overlay') { t.classList.remove('open'); return; }
 
           // Add-stock modal — open
           if (t.closest('#btn-add-stock')) { this._openAddStockModal(); return; }
@@ -7627,9 +7651,13 @@
         set('port-pnl-amount', (pnlUp ? '+' : '') + totalPnl.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' MAD total');
         set('port-count', this._portfolio.length + ' titres');
 
-        // Progress bar
+        // Progress bar: ±20% PnL maps to 0–100%. 0% PnL = 50% width.
+        // (previous multiplier of 5 was arbitrary and filled bar at +10% PnL)
         const barEl = document.getElementById('port-bar-fill');
-        if (barEl) barEl.style.width = Math.min(100, Math.max(0, 50 + totalPnlPct * 5)) + '%';
+        if (barEl) {
+          barEl.style.width = Math.min(100, Math.max(0, 50 + totalPnlPct * 2.5)) + '%';
+          barEl.title = `P&L: ${(totalPnlPct >= 0 ? '+' : '') + totalPnlPct.toFixed(2)}%`;
+        }
 
         // Update history for graph
         this._updatePortfolioHistory(totalValue);
@@ -7764,16 +7792,23 @@
       }
 
       _prefillCalc(price, ticker) {
-        const inp = document.getElementById('calc-price');
-        const badge = document.getElementById('calc-selected-badge');
-        if (inp) { inp.value = price; this._calculateCost(); }
-        if (badge) {
-          badge.style.display = 'flex';
-          badge.innerHTML = `<strong style="color:var(--green);">${ticker}</strong><span style="color:var(--text3);">→</span>${Number(price).toLocaleString('fr-FR')} MAD`;
+        // Navigate to outils page first so the user can see the calculator being filled
+        if (this.currentPage !== 'outils') {
+          this._navigateTo('outils');
         }
-        document.querySelectorAll('.qr-card').forEach(c => c.classList.remove('selected'));
-        document.querySelector(`.qr-card[data-ticker="${ticker}"]`)?.classList.add('selected');
-        inp?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Defer fill until after page transition paint
+        requestAnimationFrame(() => {
+          const inp = document.getElementById('calc-price');
+          const badge = document.getElementById('calc-selected-badge');
+          if (inp) { inp.value = price; this._calculateCost(); }
+          if (badge) {
+            badge.style.display = 'flex';
+            badge.innerHTML = `<strong style="color:var(--green);">${ticker}</strong><span style="color:var(--text3);">→</span>${Number(price).toLocaleString('fr-FR')} MAD`;
+          }
+          document.querySelectorAll('.qr-card').forEach(c => c.classList.remove('selected'));
+          document.querySelector(`.qr-card[data-ticker="${ticker}"]`)?.classList.add('selected');
+          inp?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
       }
 
       // ══════════════════════════════════════════════════════
@@ -7906,6 +7941,9 @@
       _toggleTheme() {
         this.isLight = !this.isLight;
         UIController.toggleTheme(this.isLight);
+        // Sync aria-pressed on the theme toggle button for screen readers
+        const btn = document.getElementById('theme-toggle-btn');
+        if (btn) btn.setAttribute('aria-pressed', String(this.isLight));
         try { localStorage.setItem('wamy_theme', this.isLight ? 'light' : 'dark'); } catch (e) { }
       }
 
@@ -7928,6 +7966,10 @@
       }
 
       _loadTheme() {
+        const _syncThemeAria = (isLight) => {
+          const btn = document.getElementById('theme-toggle-btn');
+          if (btn) btn.setAttribute('aria-pressed', String(isLight));
+        };
         try {
           const savedTheme = localStorage.getItem('wamy_theme');
           if (savedTheme === 'light') {
@@ -7937,6 +7979,7 @@
             this.isLight = !window.matchMedia('(prefers-color-scheme: dark)').matches;
             UIController.toggleTheme(this.isLight);
           }
+          _syncThemeAria(this.isLight);
         } catch (e) { }
 
         // listen for system theme changes dynamically
@@ -7947,6 +7990,7 @@
           } catch (err) { }
           this.isLight = !e.matches;
           UIController.toggleTheme(this.isLight);
+          _syncThemeAria(this.isLight);
         });
       }
 
@@ -7954,11 +7998,24 @@
       //  MARKET TIMER
       // ══════════════════════════════════════════════════════
       _updateMarketTimer() {
+        // Use IANA timezone 'Africa/Casablanca' to get correct Morocco local time.
+        // This handles Ramadan schedule (UTC+0) vs standard time (UTC+1) automatically.
+        // The previous hardcoded UTC+1 offset was wrong during Ramadan.
         const now = new Date();
-        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-        const rabat = new Date(utc + 3600000);
-        const day = rabat.getDay();
-        const h = rabat.getHours(), m = rabat.getMinutes();
+        const fmt = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Africa/Casablanca',
+          weekday: 'narrow', hour: 'numeric', minute: 'numeric', hour12: false
+        });
+        const parts = fmt.formatToParts(now);
+        const get = type => parseInt(parts.find(p => p.type === type)?.value || '0', 10);
+        const dayStr = parts.find(p => p.type === 'weekday')?.value || '';
+        // 'en-GB' narrow weekday: M T W T F S S
+        const dayMap = { M: 1, T: 2, W: 3, F: 5, S: 6 }; // T is ambiguous (Tue/Thu), handled below
+        // Use a second formatter for a full weekday name to avoid ambiguity
+        const dayName = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Casablanca', weekday: 'long' }).format(now);
+        const dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(dayName);
+        const h = get('hour'), m = get('minute');
+        const day = dayOfWeek >= 0 ? dayOfWeek : new Date().getDay(); // fallback
         const total = h * 60 + m;
         const OPEN = 9 * 60 + 30, CLOSE = 15 * 60 + 30;
         const isWeekday = day >= 1 && day <= 5;
@@ -7979,10 +8036,12 @@
           timeText = `${T('market_closes_in')} ${rh > 0 ? rh + 'h' : ''}${String(rm).padStart(2, '0')}min`;
         } else {
           statusText = T('market_status_closed');
-          const nextOpen = new Date(rabat);
+          // Compute next open time from current Casablanca time
+          const casaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Casablanca' }));
+          const nextOpen = new Date(casaDate);
           nextOpen.setHours(9, 30, 0, 0);
           if (total >= CLOSE || !isWeekday) nextOpen.setDate(nextOpen.getDate() + (day === 5 ? 3 : day === 6 ? 2 : 1));
-          const diffMs = nextOpen - rabat;
+          const diffMs = nextOpen - casaDate;
           const diffH = Math.floor(diffMs / 3600000), diffM = Math.floor((diffMs % 3600000) / 60000);
           timeText = diffH < 24
             ? `${T('market_opens_in')} ${diffH}h${String(diffM).padStart(2, '0')}min`

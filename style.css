@@ -440,7 +440,9 @@ html, body {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: 20px 20px 0 0; width: 100%; max-width: 600px;
   padding: 20px 20px 40px; animation: slideUp 0.3s ease;
+  max-height: 90vh; overflow-y: auto;
 }
+.modal-content-desktop { display: flex; flex-direction: column; }
 @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
 .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--text3); margin: 0 auto 20px; }
 .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
@@ -648,6 +650,16 @@ html, body {
   .header, .nav-tabs { padding-left: 32px; padding-right: 32px; }
   .content, .outils-content, .search-content, .div-content, .portfolio-content { padding: 0 32px 100px; }
   .summary-row { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .modal-overlay { align-items: center; padding: 20px; }
+  .modal { border-radius: 20px; padding: 32px 32px 28px; animation: popIn 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); max-width: 850px; }
+  .modal-handle { display: none; }
+  .modal-content-desktop { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .modal-desktop-left, .modal-desktop-right { display: flex; flex-direction: column; }
+  .chart-section-wrapper { padding: 0 !important; margin: 0 !important; }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 @media (min-width: 900px) {
   .stock-table { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -725,7 +737,8 @@ html, body {
 }
 
 /* Disable text selection globally except inputs */
-body, .shell, .stock-row, .nav-item, .filter-chip, .tab, .div-card {
+/* Only lock selection on chrome UI elements, not on data cards */
+body, .shell, .nav-item, .filter-chip, .tab {
   user-select: none;
   -webkit-user-select: none;
 }
@@ -1059,7 +1072,7 @@ input, textarea {
 }
 .port-fab:active { transform: scale(0.96); background: var(--gold); color: var(--bg); }
 .port-fab:hover  { background: rgba(245,200,66,0.05); box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
-}
+
 
 /* ════════════════════════════════════════════
    ADD STOCK MODAL (Bottom Sheet)

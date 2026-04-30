@@ -1,19 +1,14 @@
 // ════════════════════════════════════════════════════════
 //  WAMY — sw.js  (Service Worker)
 //  Strategy: Cache-First for static assets, Network for data
+//  v8: Fixed opaque (CDN) response caching + removed demo notification
 // ════════════════════════════════════════════════════════
 
-const CACHE_NAME  = 'wamy-v7';
+const CACHE_NAME  = 'wamy-v8'; // ⚠️ Bump this string on every deploy to bust stale caches
 const STATIC_URLS = [
   '/',
   '/index.html',
   '/style.css',
-  '/js/App.js',
-  '/js/Stock.js',
-  '/js/UIController.js',
-  '/js/Constants.js',
-  '/js/Utility.js',
-  '/js/ChartController.js',
   '/manifest.json',
   'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js',
@@ -23,7 +18,22 @@ const STATIC_URLS = [
 // ── Install: pre-cache all static resources ────────────
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_URLS))
+    caches.open(CACHE_NAME).then(cache => {
+      // addAll will fail for opaque (cross-origin) responses if the server sends a bad status.
+      // We use individual fetch+put instead of cache.addAll so one failure doesn't block the rest.
+      return Promise.allSettled(
+        STATIC_URLS.map(url =>
+          fetch(url, { mode: 'no-cors' })
+            .then(response => {
+              // Accept both basic (same-origin) and opaque (cross-origin) responses
+              if (response.status === 200 || response.type === 'opaque') {
+                return cache.put(url, response);
+              }
+            })
+            .catch(() => { /* individual URL failure is non-fatal */ })
+        )
+      );
+    })
   );
   self.skipWaiting();
 });
@@ -47,7 +57,8 @@ self.addEventListener('fetch', event => {
       if (cached) return cached;
       return fetch(event.request)
         .then(response => {
-          if (response && response.status === 200 && response.type === 'basic') {
+          // Cache both same-origin (basic) and CDN (opaque) successful responses
+          if (response && (response.status === 200 || response.type === 'opaque')) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           }
@@ -62,35 +73,19 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// ── Background Polling / Push Notifications ───────────
+// ── Price Alerts / Push Notifications ─────────────────
 let currentAlerts = {};
 
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'UPDATE_ALERTS') {
     currentAlerts = event.data.alerts;
-    
-    // DEMO LOGIC: Simulate hitting the price target after 5 seconds to show the notification
-    const tickers = Object.keys(currentAlerts);
-    if (tickers.length > 0) {
-      setTimeout(() => {
-        const t = tickers[0];
-        const a = currentAlerts[t];
-        if (a && a.active) {
-          self.registration.showNotification(`Alerte de Prix: ${t}`, {
-            body: `Le cours de ${t} a atteint votre seuil de ${a.threshold} MAD.`,
-            icon: 'https://ui-avatars.com/api/?name=Wamy&background=34d378&color=ffffff', // Demo icon
-            vibrate: [200, 100, 200],
-            data: { ticker: t }
-          });
-        }
-      }, 5000);
-    }
+    // NOTE: Real price-threshold notifications require a push backend.
+    // The previous demo that fired after 5 seconds has been intentionally removed.
   }
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  // Focus the window (or open it if closed)
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
       const client = windowClients.find(c => c.visibilityState === 'visible') || windowClients[0];
